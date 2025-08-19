@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.example.demo.dto.ChatMessageResponse;
 import com.example.demo.dto.ChatRoomResponse;
 import com.example.demo.dto.ChatSendMessageRequest;
+import com.example.demo.enums.MessageType;
 import com.example.demo.exception.AppException;
 import com.example.demo.exception.ErrorCode;
 import com.example.demo.model.*;

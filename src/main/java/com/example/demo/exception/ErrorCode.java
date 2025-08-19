@@ -37,7 +37,9 @@ public enum ErrorCode {
     PAYMENTMETHOD_NULL(1125, "Payment method cannot be null", HttpStatus.BAD_REQUEST),
     INVALID_PAYMENT_STATUS(1126, "Invalid payment status", HttpStatus.BAD_REQUEST),
 
+
     PERMISSION_COURSE_DENIED(1201, "You don't have enough permission to this course", HttpStatus.FORBIDDEN),
+    FORBIDDEN(1202, "You don't have enough permission to this resource", HttpStatus.FORBIDDEN),
 
     INSUFFICIENT_FUNDS(1301, "Insufficient funds to complete the purchase", HttpStatus.BAD_REQUEST),
 
@@ -50,6 +52,7 @@ public enum ErrorCode {
     MARK_AS_READ_FAIL(2201, "mark as read fail", HttpStatus.BAD_REQUEST),
     CATEGORY_NOT_FOUND(2202, "Category not found", HttpStatus.NOT_FOUND),
     PARENT_CATEGORY_NOT_FOUND(2203, "Parent category not found", HttpStatus.NOT_FOUND),
+    RESOURCE_NOT_FOUND(2204, "Resource not found", HttpStatus.NOT_FOUND),
 
     QUANTITY_NULL(2300, "Quantity can't be null", HttpStatus.BAD_REQUEST),
     DUPLICATE_RESOURCE(2301, "You rated this product!", HttpStatus.CONFLICT),

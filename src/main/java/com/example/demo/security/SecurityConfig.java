@@ -1,10 +1,15 @@
 package com.example.demo.security;
 
 import lombok.RequiredArgsConstructor;
+
+import java.time.Duration;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -13,6 +18,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -25,6 +33,7 @@ public class SecurityConfig {
         http
             // Disable CSRF for stateless JWT
             .csrf(csrf -> csrf.disable())
+            .cors(Customizer.withDefaults()) // QUAN TRỌNG
             // Stateless session, không dùng session của Spring Security
             .sessionManagement(sm -> sm
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -34,9 +43,12 @@ public class SecurityConfig {
                 // Public: đăng ký & đăng nhập
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/payments/confirm-webhook").permitAll()
+                .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/uploads/**").permitAll() // Cho phép truy cập tệp tải lên
 
                 // Public: xem danh sách + chi tiết sản phẩm
                 .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/categories/tree").permitAll()
 
                 // Seller (hoặc Admin) mới được tạo/ sửa/ xóa sản phẩm
                 .requestMatchers(HttpMethod.POST,   "/api/products").hasAnyRole("SELLER", "ADMIN")
@@ -74,5 +86,23 @@ public class SecurityConfig {
             AuthenticationConfiguration authenticationConfiguration
     ) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of(
+            "http://localhost:5173",
+            "http://localhost:3000"
+        ));
+        config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization","Content-Type","X-Requested-With","Accept"));
+        config.setAllowCredentials(true);
+        config.setExposedHeaders(List.of("Authorization","Location","X-Total-Count"));
+        config.setMaxAge(Duration.ofHours(1));
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }

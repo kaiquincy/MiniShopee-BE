@@ -39,7 +39,8 @@ public class CartController {
                 .mapToDouble(CartItemResponse::getTotalPrice)
                 .sum();
             // Ví dụ: phí vận chuyển cố định 30.000
-            double shippingFee = subTotal > 500_000 ? 0.0 : 30_000.0;
+            // double shippingFee = subTotal > 500_000 ? 0.0 : 30_000.0;
+            double shippingFee = 0;
             double grandTotal = subTotal + shippingFee;
 
             CartResponse data = CartResponse.builder()
