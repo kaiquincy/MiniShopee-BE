@@ -24,14 +24,13 @@ public class CartService {
 
     public Cart getCartByUserId(Long userId) {
         Optional<Cart> cart1 = cartRepository.findByUserId(userId);
-        logger.info("Creating new cart for userId = {}, cart = {}", userId, cart1);
         return cart1
             .orElseGet(() -> {
                 User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found"));
                 Cart cart = Cart.builder().user(user).build();
 
-                logger.info("Creating new cart for userId = {}, cart = {}", userId, cart);
+                // logger.info("Creating new cart for userId = {}, cart = {}", userId, cart);
 
                 return cartRepository.save(cart);
             });

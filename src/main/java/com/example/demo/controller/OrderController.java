@@ -12,12 +12,14 @@ import com.example.demo.service.OrderService;
 import com.example.demo.service.PaymentService;
 import com.example.demo.service.UserService;
 import com.example.demo.model.Order;
-import com.example.demo.repository.OrderRepository;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -26,7 +28,8 @@ public class OrderController {
     private final OrderService orderService;
     private final UserService userService;
     private final PaymentService paymentService;
-    private final OrderRepository orderRepository;
+    private static final Logger logger = LoggerFactory.getLogger(OrderController.class);
+
 
     @PostMapping
     public ApiResponse<OrderResponse> placeOrder(@RequestBody OrderRequest orderRequest) {
@@ -44,6 +47,8 @@ public class OrderController {
                 .paymentMethod(orderRequest.getMethod().name())
                 .totalAmount(order.getGrandTotal())
                 .build();
+
+        logger.info("Order id: {}", order.getId());
 
         // Tạo payment nếu phương thức thanh toán là PayOS
         if (orderRequest.getMethod() == PaymentMethod.PAYOS) {

@@ -11,5 +11,6 @@ public class OrderResponseDetail {
     private Long orderId;
     private LocalDateTime createdAt;
     private String status;
+    private Double totalAmount;
     private List<OrderItemResponse> items;
 }

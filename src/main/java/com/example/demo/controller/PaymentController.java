@@ -13,8 +13,13 @@ import com.example.demo.dto.ApiResponse;
 import com.example.demo.dto.PaymentCallbackDto;
 import com.example.demo.dto.PaymentRequest;
 import com.example.demo.dto.PaymentResponse;
+import com.example.demo.enums.OrderStatus;
 import com.example.demo.enums.PaymentMethod;
+import com.example.demo.exception.AppException;
+import com.example.demo.exception.ErrorCode;
+import com.example.demo.model.Order;
 import com.example.demo.model.Payment;
+import com.example.demo.repository.OrderRepository;
 import com.example.demo.repository.PaymentRepository;
 import com.example.demo.service.PaymentService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,6 +37,7 @@ import vn.payos.type.WebhookData;
 public class PaymentController {
     private final PaymentService paymentService;
     private final PaymentRepository paymentRe;
+    private final OrderRepository orderRepo;
     private static final Logger logger = LoggerFactory.getLogger(OrderController.class);
     @Autowired
     PayOS payOS;
@@ -66,6 +72,13 @@ public class PaymentController {
             Payment currentTransaction = paymentRe.getPaymentByTransactionId(data.getPaymentLinkId()).get();
             
             paymentService.changeStatus(currentTransaction, "SUCCESS");
+
+            // Order order = orderRepo.findById(orderId)
+            //     .orElseThrow(() -> new AppException(
+            //         ErrorCode.ORDER_NOT_EXISTED));
+            // order.setStatus(OrderStatus.PAID.toString());
+            // orderRepo.save(order);
+
 
             //add enrollment
             // System.out.println(currentTransaction.getProductId());

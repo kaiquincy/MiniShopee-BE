@@ -93,6 +93,7 @@ public class OrderService {
                 .orderId(order.getId())
                 .createdAt(order.getCreatedAt())
                 .status(order.getStatus())
+                .totalAmount(order.getGrandTotal())
                 .items(itemDtos)
                 .build();
 

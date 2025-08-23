@@ -38,10 +38,13 @@ public class JwtUtils {
     public String generateToken(Authentication authentication) {
         final Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
         String username = authentication.getName(); // Extract username from Authentication
+        String role = authentication.getAuthorities().iterator().next().getAuthority(); // Extract role from Authentication
+        
         return Jwts.builder()
                 .subject(username)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .claim("role", role)
                 .signWith(key)
                 .compact();
     }

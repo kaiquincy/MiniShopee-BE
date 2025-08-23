@@ -100,8 +100,6 @@ public class PaymentService {
             p.setTransactionId(data.getPaymentLinkId());
             paymentRepo.save(p);
 
-            order.setStatus(OrderStatus.PAID.toString());
-            orderRepo.save(order);
 
             return new PaymentResponse(p.getTransactionId(), data.getCheckoutUrl(), p.getStatus());
         } catch (Exception e) {

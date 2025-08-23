@@ -5,6 +5,8 @@ import com.example.demo.dto.ApiResponse;
 import com.example.demo.exception.AppException;
 import com.example.demo.dto.ProductRequest;
 import com.example.demo.dto.ProductResponse;
+import com.example.demo.enums.ProductStatus;
+import com.example.demo.enums.ProductType;
 import com.example.demo.exception.ErrorCode;
 import com.example.demo.model.Product;
 import com.example.demo.model.User;
@@ -17,8 +19,10 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.example.demo.model.Category;
@@ -86,47 +90,58 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<ProductResponse>> create(@RequestBody ProductRequest req) {
+    // public ResponseEntity<ApiResponse<ProductResponse>> create(@RequestBody ProductRequest req) {
+    public ResponseEntity<ApiResponse<ProductResponse>> create(
+            @RequestParam("img") MultipartFile image,
+            @RequestParam("name") String name,
+            @RequestParam("description") String description,
+            @RequestParam("price") Double price,
+            @RequestParam("quantity") Integer quantity,
+            @RequestParam("categoryIds") Set<Long> categoryIds,
+            @RequestParam(value = "discountPrice", required = false) Double discountPrice,
+            @RequestParam(value = "sku", required = false) String sku,
+            @RequestParam(value = "brand", required = false) String brand,
+            @RequestParam(value = "type", required = false) String type,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "weight", required = false) Double weight,
+            @RequestParam(value = "dimensions", required = false) String dimensions,
+            @RequestParam(value = "isFeatured", required = false) Boolean isFeatured
+            )
+    {
         ApiResponse<ProductResponse> resp = new ApiResponse<>();
         // Validate bắt buộc
-        if (req.getName() == null) {
+        if (name == null) {
             resp.setCode(ErrorCode.TITLE_NULL.getCode());
             resp.setMessage(ErrorCode.TITLE_NULL.getMessage());
             return ResponseEntity
                     .status(ErrorCode.TITLE_NULL.getStatusCode())
                     .body(resp);
         }
-        if (req.getDescription() == null) {
+        if (description == null) {
             resp.setCode(ErrorCode.DESC_NULL.getCode());
             resp.setMessage(ErrorCode.DESC_NULL.getMessage());
             return ResponseEntity
                     .status(ErrorCode.DESC_NULL.getStatusCode())
                     .body(resp);
         }
-        if (req.getPrice() == null) {
+        if (price == null) {
             resp.setCode(ErrorCode.PRICE_NULL.getCode());
             resp.setMessage(ErrorCode.PRICE_NULL.getMessage());
             return ResponseEntity
                     .status(ErrorCode.PRICE_NULL.getStatusCode())
                     .body(resp);
         }
-        if (req.getQuantity() == null) {
+        if (quantity == null) {
             resp.setCode(ErrorCode.QUANTITY_NULL.getCode());
             resp.setMessage(ErrorCode.QUANTITY_NULL.getMessage());
             return ResponseEntity
                     .status(ErrorCode.QUANTITY_NULL.getStatusCode())
                     .body(resp);
         }
-        if (req.getSellerId() == null) {
-            resp.setCode(ErrorCode.USER_NOT_EXISTED.getCode());
-            resp.setMessage("SellerId cannot be null");
-            return ResponseEntity
-                    .status(ErrorCode.USER_NOT_EXISTED.getStatusCode())
-                    .body(resp);
-        }
+        Long sellerId = userService.getCurrentUserId();
 
         // Kiểm tra category
-        if (req.getCategoryIds() == null) {
+        if (categoryIds == null) {
             resp.setCode(ErrorCode.CATEGORY_NOT_FOUND.getCode());
             resp.setMessage("CategoryId cannot be null");
             return ResponseEntity
@@ -135,28 +150,28 @@ public class ProductController {
         }
 
         try {
-            User sellerOpt = userReposiroty.findById(req.getSellerId())
+            User sellerOpt = userReposiroty.findById(sellerId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
             Product product = Product.builder()
-                    .name(req.getName())
-                    .description(req.getDescription())
-                    .imageUrl(req.getImageUrl())
-                    .price(req.getPrice())
-                    .discountPrice(req.getDiscountPrice())
-                    .quantity(req.getQuantity())
-                    .sku(req.getSku())
-                    .brand(req.getBrand())
-                    .type(req.getType())
-                    .status(req.getStatus())
-                    .weight(req.getWeight())
-                    .dimensions(req.getDimensions())
-                    .isFeatured(req.getIsFeatured())
+                    .name(name)
+                    .description(description)
+                    .imageUrl(null)
+                    .price(price)
+                    .discountPrice(discountPrice)
+                    .quantity(quantity)
+                    .sku(sku)
+                    .brand(brand)
+                    .type(type != null ? ProductType.valueOf(type.toUpperCase()) : null)
+                    .status(status != null ? ProductStatus.valueOf(status.toUpperCase()) : null)
+                    .weight(weight)
+                    .dimensions(dimensions)
+                    .isFeatured(isFeatured != null ? isFeatured : false)
                     .seller(sellerOpt)
                     .build();
 
             // categoryIds phải lưu riêng vì Product vầ Category có quan hệ nhiều-nhiều
-            Product saved = productService.save(product, req.getCategoryIds());
+            Product saved = productService.save(product, categoryIds, image);
             ProductResponse dto = new ProductResponse(saved);
             resp.setResult(dto);
             resp.setMessage("Tạo sản phẩm thành công");
@@ -174,7 +189,24 @@ public class ProductController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<ProductResponse>> update(
             @PathVariable Long id,
-            @RequestBody ProductRequest req) {
+            @RequestParam(value = "img", required = false) MultipartFile image,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "description", required = false ) String description,
+            @RequestParam(value = "price", required = false) Double price,
+            @RequestParam(value = "quantity", required = false) Integer quantity,
+            @RequestParam(value = "sellerId", required = false) Long sellerId,
+            @RequestParam(value = "categoryIds", required = false) Set<Long> categoryIds,
+            @RequestParam(value = "discountPrice", required = false) Double discountPrice,
+            @RequestParam(value = "sku", required = false) String sku,
+            @RequestParam(value = "brand", required = false) String brand,
+            @RequestParam(value = "type", required = false) String type,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "weight", required = false) Double weight,
+            @RequestParam(value = "dimensions", required = false) String dimensions,
+            @RequestParam(value = "isFeatured", required = false) Boolean isFeatured
+            )
+        
+        {
 
         ApiResponse<ProductResponse> resp = new ApiResponse<>();
         Optional<Product> existingOpt = productService.findById(id);
@@ -188,37 +220,36 @@ public class ProductController {
 
         Product existing = existingOpt.get();
         // Map từng trường nếu có
-        if (req.getName() != null) existing.setName(req.getName());
-        if (req.getDescription() != null) existing.setDescription(req.getDescription());
-        if (req.getImageUrl() != null) existing.setImageUrl(req.getImageUrl());
-        if (req.getPrice() != null) existing.setPrice(req.getPrice());
-        if (req.getDiscountPrice() != null) existing.setDiscountPrice(req.getDiscountPrice());
-        if (req.getQuantity() != null) existing.setQuantity(req.getQuantity());
-        if (req.getSku() != null) existing.setSku(req.getSku());
-        if (req.getBrand() != null) existing.setBrand(req.getBrand());
-        if (req.getType() != null) existing.setType(req.getType());
-        if (req.getStatus() != null) existing.setStatus(req.getStatus());
-        if (req.getWeight() != null) existing.setWeight(req.getWeight());
-        if (req.getDimensions() != null) existing.setDimensions(req.getDimensions());
-        if (req.getIsFeatured() != null) existing.setIsFeatured(req.getIsFeatured());
+        if (name != null) existing.setName(name);
+        if (description != null) existing.setDescription(name);
+        if (price != null) existing.setPrice(price);
+        if (discountPrice != null) existing.setDiscountPrice(discountPrice);
+        if (quantity != null) existing.setQuantity(quantity);
+        if (sku != null) existing.setSku(sku);
+        if (brand != null) existing.setBrand(brand);
+        if (type != null) existing.setType(type != null ? ProductType.valueOf(type.toUpperCase()) : null);
+        if (status != null) existing.setStatus(status != null ? ProductStatus.valueOf(status.toUpperCase()) : null);
+        if (weight != null) existing.setWeight(weight);
+        if (dimensions != null) existing.setDimensions(dimensions);
+        if (isFeatured != null) existing.setIsFeatured(isFeatured);
 
         try {
             // Xử lý seller nếu cần
-            if (req.getSellerId() != null) {
-                User seller = userService.findById(req.getSellerId())
+            if (sellerId != null) {
+                User seller = userService.findById(sellerId)
                         .orElseThrow(() -> new AppException(
                             ErrorCode.USER_NOT_EXISTED));
                 existing.setSeller(seller);
             }
 
             // Nếu có categoryIds thì load lại
-            if (req.getCategoryIds() != null) {
-                existing = productService.save(existing, req.getCategoryIds());
+            if (categoryIds != null) {
+                existing = productService.save(existing, categoryIds, image);
             } else {
                 existing = productService.save(existing, existing.getCategories()
                                                       .stream()
                                                       .map(Category::getId)
-                                                      .collect(Collectors.toSet()));
+                                                      .collect(Collectors.toSet()), image);
             }
 
             // Lưu và trả kết quả
