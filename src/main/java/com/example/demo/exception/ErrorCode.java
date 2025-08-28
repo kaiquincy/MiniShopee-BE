@@ -21,6 +21,7 @@ public enum ErrorCode {
     ORDER_ITEM_NOT_EXISTED(1012, "Order item not existed", HttpStatus.NOT_FOUND),
     PAYMENT_NOT_EXISTED(1013, "Payment not existed", HttpStatus.NOT_FOUND),
     CATEGORY_NOT_EXISTED(1014, "Category not existed", HttpStatus.NOT_FOUND),
+    ADDRESS_NOT_EXISTED(1015, "Address not existed", HttpStatus.NOT_FOUND),
 
     USERNAME_INVALID(1102, "Username must be between 5 and 15 characters", HttpStatus.BAD_REQUEST),
     USERNAME_NULL(1103, "Username cannot be null", HttpStatus.BAD_REQUEST),
@@ -36,7 +37,10 @@ public enum ErrorCode {
     INVALID_INPUT_RATETING(1124, "Star must be between 1-5", HttpStatus.BAD_REQUEST),
     PAYMENTMETHOD_NULL(1125, "Payment method cannot be null", HttpStatus.BAD_REQUEST),
     INVALID_PAYMENT_STATUS(1126, "Invalid payment status", HttpStatus.BAD_REQUEST),
-
+    ADDRESS_FULLNAME_NULL(1127, "Fullname cannot be null", HttpStatus.BAD_REQUEST),
+    ADDRESS_PHONE_NULL(1128, "Phone cannot be null", HttpStatus.BAD_REQUEST),
+    ADDRESS_LINE1_NULL(1129, "Line1 cannot be null", HttpStatus.BAD_REQUEST),
+    ADDRESS_CITY_NULL(1130, "City cannot be null", HttpStatus.BAD_REQUEST), 
 
     PERMISSION_COURSE_DENIED(1201, "You don't have enough permission to this course", HttpStatus.FORBIDDEN),
     FORBIDDEN(1202, "You don't have enough permission to this resource", HttpStatus.FORBIDDEN),
