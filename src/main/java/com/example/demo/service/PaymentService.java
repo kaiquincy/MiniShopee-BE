@@ -73,9 +73,9 @@ public class PaymentService {
         // GatewayResponse gw = gatewayClient.createTransaction(p);
         try {
             final String productName = "Payment for order " + orderId;
-            final String description = "Payment for orders " + orderId;
-            final String returnUrl = "Http://example.com/return"; // replace with actual return UR
-            final String cancelUrl = "Http://example.com/cancel"; // replace with actual cancel UR
+            final String description = orderId.toString();
+            final String returnUrl = "http://localhost:5173/payment/return"; // replace with actual return UR
+            final String cancelUrl = "Http://localhost:5173/payment/cancel"; // replace with actual cancel UR
             double total = orderItems.stream()
                     .mapToDouble(oi -> oi.getPrice() * oi.getQuantity())
                     .sum()*25000; // Assuming price is in USD, convert to VND

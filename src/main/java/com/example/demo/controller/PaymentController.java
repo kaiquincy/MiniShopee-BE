@@ -73,11 +73,17 @@ public class PaymentController {
             
             paymentService.changeStatus(currentTransaction, "SUCCESS");
 
-            // Order order = orderRepo.findById(orderId)
-            //     .orElseThrow(() -> new AppException(
-            //         ErrorCode.ORDER_NOT_EXISTED));
-            // order.setStatus(OrderStatus.PAID.toString());
-            // orderRepo.save(order);
+            logger.info("Payment verified (WebhookData) = \n{}",
+                    objectMapper.writerWithDefaultPrettyPrinter()
+                                .writeValueAsString(data));
+
+            Long orderId = currentTransaction.getOrder().getId();
+
+            Order order = orderRepo.findById(orderId)
+                .orElseThrow(() -> new AppException(
+                    ErrorCode.ORDER_NOT_EXISTED));
+            order.setStatus(OrderStatus.PAID.toString());
+            orderRepo.save(order);
 
 
             //add enrollment
