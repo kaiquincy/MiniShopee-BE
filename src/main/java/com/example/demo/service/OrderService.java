@@ -1,6 +1,8 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.AdminOrdersResponse;
 import com.example.demo.dto.OrderItemResponse;
+import com.example.demo.dto.OrderResponse;
 import com.example.demo.dto.OrderResponseDetail;
 import com.example.demo.exception.AppException;
 import com.example.demo.exception.ErrorCode;
@@ -55,6 +57,20 @@ public class OrderService {
         // clear cart
         cartService.clearCart(userId);
         return order;
+    }
+
+    public List<AdminOrdersResponse> listOrders(String q, String status) {
+        List<Order> orders = orderRepository.findAll(); // TODO: filter theo q, status nếu cần
+        return orders.stream()
+            .map(o -> new AdminOrdersResponse(
+                o.getId(),
+                o.getCreatedAt(),
+                o.getStatus(),
+                // o.getPaymentMethod(),
+                o.getGrandTotal()
+                // o.getPaymentLink()
+            ))
+            .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
