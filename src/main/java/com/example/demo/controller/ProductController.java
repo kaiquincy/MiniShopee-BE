@@ -39,12 +39,14 @@ public class ProductController {
     public ResponseEntity<ApiResponse<Page<ProductResponse>>> list(
             @RequestParam(required = false) String name,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) Long categoryId
+            ) {
 
         ApiResponse<Page<ProductResponse>> resp = new ApiResponse<>();
         try {
             Pageable pageable = PageRequest.of(page, size);
-            Page<Product> productPage = productService.findAll(name, pageable);
+            Page<Product> productPage = productService.findByCategoryId(categoryId, name, pageable);
 
             // ✅ Chuyển Page<Product> -> Page<ProductDTO>
             Page<ProductResponse> dtoPage = productPage.map(ProductResponse::new);

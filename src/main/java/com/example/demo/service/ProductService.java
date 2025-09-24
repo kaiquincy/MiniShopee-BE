@@ -63,6 +63,25 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
+    public Page<Product> findByCategoryId(Long categoryId, String name, Pageable pageable) {
+        // (tuỳ chọn) kiểm tra category tồn tại để báo lỗi đẹp
+        if (categoryId != null && !categoryRepo.existsById(categoryId)) {
+            throw new AppException(ErrorCode.CATEGORY_NOT_FOUND);
+        }
+
+        if (categoryId == null) {
+            // fallback: không có category -> dùng findAll cũ
+            return findAll(name, pageable);
+        }
+
+        if (name != null && !name.isBlank()) {
+            return productRepository.findDistinctByCategories_IdAndNameContainingIgnoreCase(
+                    categoryId, name, pageable
+            );
+        }
+        return productRepository.findDistinctByCategories_Id(categoryId, pageable);
+    }
+
     // Hàm lưu file ảnh và trả về tên file
     private String saveImage(MultipartFile image) {
         if (image != null && !image.isEmpty()) {
