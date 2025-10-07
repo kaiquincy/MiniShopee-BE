@@ -9,7 +9,7 @@ import com.example.demo.enums.ProductType;
 import lombok.Data;
 
 @Data
-public class ProductRequest {
+public class ProductCreateRequest {
     private String name;
     private String description;
     private String imageUrl;
@@ -26,4 +26,7 @@ public class ProductRequest {
     private String dimensions;
     private Boolean isFeatured;
 
+    // Phân loại
+    private List<VariantGroupRequest> variantGroups; // tối đa 2
+    private List<VariantRowRequest> variants;        // danh sách biến thể
 }

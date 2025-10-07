@@ -62,7 +62,8 @@ public enum ErrorCode {
     DUPLICATE_RESOURCE(2301, "You rated this product!", HttpStatus.CONFLICT),
     
     OUT_OF_STOCK(2302, "Out of stock", HttpStatus.BAD_REQUEST),
-    INVALID_STATUS_TRANSITION(2303, "You can't change the status of order like that! Read OrderStatusSerive.java for receipt", HttpStatus.BAD_REQUEST),
+    INVALID_STATUS_TRANSITION(2303, "You can't change the status of order like that! Read OrderStatusSerive.java for receipt", HttpStatus.BAD_REQUEST), 
+    INVALID_REQUEST(2304, "Invalid request", HttpStatus.BAD_REQUEST)
     ;
 
 

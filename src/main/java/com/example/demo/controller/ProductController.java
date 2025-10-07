@@ -2,25 +2,40 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.ApiResponse;
+import com.example.demo.dto.ProductCreateRequest;
+import com.example.demo.dto.ProductDetailResponse;
 import com.example.demo.exception.AppException;
 import com.example.demo.dto.ProductRequest;
 import com.example.demo.dto.ProductResponse;
+import com.example.demo.dto.VariantGroupDto;
+import com.example.demo.dto.VariantOptionDto;
+import com.example.demo.dto.VariantDto;
+
 import com.example.demo.enums.ProductStatus;
 import com.example.demo.enums.ProductType;
 import com.example.demo.exception.ErrorCode;
 import com.example.demo.model.Product;
+import com.example.demo.model.ProductVariant;
 import com.example.demo.model.User;
+import com.example.demo.model.VariantGroup;
+import com.example.demo.model.VariantOption;
+import com.example.demo.repository.ProductVariantRepository;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.repository.VariantGroupRepository;
+import com.example.demo.repository.VariantOptionRepository;
 import com.example.demo.service.ProductService;
 import com.example.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.*;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,6 +49,10 @@ public class ProductController {
     private final ProductService productService;
     private final UserService userService;
     private final UserRepository userReposiroty;
+    private final VariantGroupRepository variantGroupRepository;
+    private final VariantOptionRepository variantOptionRepository;
+    private final ProductVariantRepository productVariantRepository;
+
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<ProductResponse>>> list(
@@ -66,22 +85,89 @@ public class ProductController {
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ProductResponse>> get(@PathVariable Long id) {
-        ApiResponse<ProductResponse> resp = new ApiResponse<>();
+    public ResponseEntity<ApiResponse<ProductDetailResponse>> get(@PathVariable Long id) {
+        ApiResponse<ProductDetailResponse> resp = new ApiResponse<>();
         try {
             Optional<Product> opt = productService.findById(id);
-            if (opt.isPresent()) {
-                ProductResponse dto = new ProductResponse(opt.get());
-                resp.setResult(dto);
-                resp.setMessage("Lấy thông tin sản phẩm thành công");
-                return ResponseEntity.ok(resp);
-            } else {
+            if (opt.isEmpty()) {
                 resp.setCode(ErrorCode.PRODUCT_NOT_EXISTED.getCode());
                 resp.setMessage("Sản phẩm không tồn tại");
                 return ResponseEntity
                         .status(ErrorCode.PRODUCT_NOT_EXISTED.getStatusCode())
                         .body(resp);
             }
+
+            Product p = opt.get();
+
+            // --- Load groups + options + variants ---
+            // inject 3 repo này vào Controller qua constructor, hoặc gọi qua 1 service chi tiết
+            List<VariantGroup> groups = variantGroupRepository.findByProduct_IdOrderBySortOrderAsc(p.getId());
+            Map<Long, String> groupIdToName = new java.util.HashMap<>();
+
+            List<VariantGroupDto> groupDtos = new java.util.ArrayList<>();
+            for (VariantGroup g : groups) {
+                groupIdToName.put(g.getId(), g.getName());
+                var ops = variantOptionRepository.findByGroup_Id(g.getId());
+                var opDtos = ops.stream()
+                        .map(o -> VariantOptionDto.builder()
+                                .id(o.getId())
+                                .value(o.getValue())
+                                .build())
+                        .toList();
+
+                groupDtos.add(VariantGroupDto.builder()
+                        .id(g.getId())
+                        .name(g.getName())
+                        .sortOrder(g.getSortOrder())
+                        .options(opDtos)
+                        .build());
+            }
+
+            // variants (mỗi variant có set<Option>)
+            var pvList = productVariantRepository.findByProduct_Id(p.getId());
+            List<VariantDto> variantDtos = new java.util.ArrayList<>();
+            for (ProductVariant pv : pvList) {
+                // map optionValues: {groupName: optionValue}
+                Map<String, String> optionValues = new java.util.HashMap<>();
+                for (VariantOption op : pv.getOptions()) {
+                    String gName = groupIdToName.get(op.getGroup().getId());
+                    if (gName != null) optionValues.put(gName, op.getValue());
+                }
+
+                variantDtos.add(VariantDto.builder()
+                        .id(pv.getId())
+                        .price(pv.getPrice())
+                        .stock(pv.getStock())
+                        .skuCode(pv.getSkuCode())
+                        .imageUrl(pv.getImageUrl())
+                        .optionValues(optionValues)
+                        .build());
+            }
+
+            // categoryIds để FE hiển thị tag/đường dẫn
+            var categoryIds = p.getCategories() == null ? java.util.List.<Long>of()
+                    : p.getCategories().stream().map(Category::getId).toList();
+
+            // Build response chi tiết
+            ProductDetailResponse dto = ProductDetailResponse.builder()
+                    .id(p.getId())
+                    .name(p.getName())
+                    .description(p.getDescription())
+                    .imageUrl(p.getImageUrl())
+                    .price(p.getPrice())
+                    .discountPrice(p.getDiscountPrice())
+                    .quantity(p.getQuantity())
+                    .sku(p.getSku())
+                    .brand(p.getBrand())
+                    .categoryIds(categoryIds)
+                    .variantGroups(groupDtos)
+                    .variants(variantDtos)
+                    .build();
+
+            resp.setResult(dto);
+            resp.setMessage("Lấy thông tin sản phẩm thành công");
+            return ResponseEntity.ok(resp);
+
         } catch (Exception ex) {
             resp.setCode(ErrorCode.UNCATEGORIZE_EXCEPTION.getCode());
             resp.setMessage("Lỗi khi lấy sản phẩm - " + ex.getMessage());
@@ -90,6 +176,9 @@ public class ProductController {
                     .body(resp);
         }
     }
+
+
+
 
     @PostMapping
     // public ResponseEntity<ApiResponse<ProductResponse>> create(@RequestBody ProductRequest req) {
@@ -187,6 +276,121 @@ public class ProductController {
                     .body(resp);
         }
     }
+
+
+
+
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, path = "/test")
+    public ResponseEntity<ApiResponse<ProductResponse>> create2(
+            @RequestPart(value = "img", required = false) MultipartFile image,
+            @RequestPart("payload") ProductCreateRequest payload,
+            // BẮT TẤT CẢ FILE PARTS (kể cả img), rồi lọc ra variantImages[...]
+            @RequestParam(required = false)
+            org.springframework.util.MultiValueMap<String, MultipartFile> fileMap
+    ) {
+        ApiResponse<ProductResponse> resp = new ApiResponse<>();
+
+        // --- Validate cơ bản (lấy từ payload) ---
+        if (payload.getName() == null) {
+            resp.setCode(ErrorCode.TITLE_NULL.getCode());
+            resp.setMessage(ErrorCode.TITLE_NULL.getMessage());
+            return ResponseEntity.status(ErrorCode.TITLE_NULL.getStatusCode()).body(resp);
+        }
+        if (payload.getDescription() == null) {
+            resp.setCode(ErrorCode.DESC_NULL.getCode());
+            resp.setMessage(ErrorCode.DESC_NULL.getMessage());
+            return ResponseEntity.status(ErrorCode.DESC_NULL.getStatusCode()).body(resp);
+        }
+        if (payload.getPrice() == null) {
+            resp.setCode(ErrorCode.PRICE_NULL.getCode());
+            resp.setMessage(ErrorCode.PRICE_NULL.getMessage());
+            return ResponseEntity.status(ErrorCode.PRICE_NULL.getStatusCode()).body(resp);
+        }
+        if (payload.getQuantity() == null) {
+            resp.setCode(ErrorCode.QUANTITY_NULL.getCode());
+            resp.setMessage(ErrorCode.QUANTITY_NULL.getMessage());
+            return ResponseEntity.status(ErrorCode.QUANTITY_NULL.getStatusCode()).body(resp);
+        }
+        if (payload.getCategoryIds() == null) {
+            resp.setCode(ErrorCode.CATEGORY_NOT_FOUND.getCode());
+            resp.setMessage("CategoryId cannot be null");
+            return ResponseEntity.status(ErrorCode.CATEGORY_NOT_FOUND.getStatusCode()).body(resp);
+        }
+
+        try {
+            Long sellerId = userService.getCurrentUserId();
+            User sellerOpt = userReposiroty.findById(sellerId)
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+            // NOTE: nếu payload.type/status là String, chuyển sang enum:
+            Product product = Product.builder()
+                    .name(payload.getName())
+                    .description(payload.getDescription())
+                    .imageUrl(null)
+                    .price(payload.getPrice())
+                    .discountPrice(payload.getDiscountPrice())
+                    .quantity(payload.getQuantity())
+                    .sku(payload.getSku())
+                    .brand(payload.getBrand())
+                    .type(payload != null ? payload.getType() : null)
+                    .status(payload != null ? payload.getStatus() : null)
+                    .weight(payload.getWeight())
+                    .dimensions(payload.getDimensions())
+                    .isFeatured(Boolean.TRUE.equals(payload.getIsFeatured()))
+                    .seller(sellerOpt)
+                    .build();
+
+            // ---- Map các part tên dạng variantImages[<imageKey>] -> MultipartFile ----
+            java.util.Map<String, MultipartFile> variantImageMap = new java.util.HashMap<>();
+            if (fileMap != null && !fileMap.isEmpty()) {
+                java.util.regex.Pattern pat = java.util.regex.Pattern.compile("^variantImages\\[(.+)]$");
+                for (String key : fileMap.keySet()) {
+                    var m = pat.matcher(key);
+                    if (m.matches()) {
+                        String imageKey = m.group(1); // ví dụ: "color=Red|size=S"
+                        MultipartFile f = fileMap.getFirst(key);
+                        if (f != null && !f.isEmpty()) {
+                            variantImageMap.put(imageKey, f);
+                        }
+                    }
+                }
+            }
+
+            // (debug) In ra các file biến thể nhận được
+            if (!variantImageMap.isEmpty()) {
+                System.out.println("Variant images:");
+                for (var e : variantImageMap.entrySet()) {
+                    System.out.println("- " + e.getKey() + ": " + e.getValue().getOriginalFilename());
+                }
+            }
+
+            Product saved = productService.saveWithVariants(
+                    product,
+                    payload.getCategoryIds(),
+                    image,               // ảnh chính part "img"
+                    payload,
+                    variantImageMap      // ảnh biến thể map theo imageKey trong payload.variants[].imageKey
+            );
+
+            ProductResponse dto = new ProductResponse(saved);
+            ApiResponse<ProductResponse> ok = new ApiResponse<>();
+            ok.setResult(dto);
+            ok.setMessage("Tạo sản phẩm thành công");
+            return ResponseEntity.ok(ok);
+
+        } catch (Exception ex) {
+            resp.setCode(ErrorCode.UNCATEGORIZE_EXCEPTION.getCode());
+            resp.setMessage("Lỗi khi tạo sản phẩm - " + ex.getMessage());
+            return ResponseEntity
+                    .status(ErrorCode.UNCATEGORIZE_EXCEPTION.getStatusCode())
+                    .body(resp);
+        }
+    }
+
+
+
+
+
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<ProductResponse>> update(

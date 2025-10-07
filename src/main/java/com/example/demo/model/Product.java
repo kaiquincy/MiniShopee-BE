@@ -1,6 +1,7 @@
 package com.example.demo.model;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 import com.example.demo.enums.ProductStatus;
@@ -68,6 +69,14 @@ public class Product {
     private String dimensions;
 
     private Boolean isFeatured;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude @EqualsAndHashCode.Exclude
+    private Set<VariantGroup> variantGroups = new HashSet<>();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude @EqualsAndHashCode.Exclude
+    private Set<ProductVariant> variants = new HashSet<>();
 
     // --------- Thêm seller ở đây ---------
     @ManyToOne(fetch = FetchType.LAZY)

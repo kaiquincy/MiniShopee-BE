@@ -1,11 +1,22 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.ProductCreateRequest;
+import com.example.demo.dto.VariantGroupRequest;
+import com.example.demo.dto.VariantRowRequest;
 import com.example.demo.exception.AppException;
 import com.example.demo.exception.ErrorCode;
 import com.example.demo.model.Category;
 import com.example.demo.model.Product;
+import com.example.demo.model.ProductVariant;
+import com.example.demo.model.VariantGroup;
+import com.example.demo.model.VariantOption;
 import com.example.demo.repository.CategoryRepository;
 import com.example.demo.repository.ProductRepository;
+import com.example.demo.repository.ProductVariantRepository;
+import com.example.demo.repository.VariantGroupRepository;
+import com.example.demo.repository.VariantOptionRepository;
+
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +30,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -29,6 +45,10 @@ import java.util.stream.Collectors;
 public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepo;
+    private final VariantGroupRepository variantGroupRepository;
+    private final VariantOptionRepository variantOptionRepository;
+    private final ProductVariantRepository productVariantRepository;
+
     @Value("${upload_img_product.path}")
     private String uploadPath;
 
@@ -46,6 +66,119 @@ public class ProductService {
         product.setCategories(cats);
         product.setImageUrl(imageName);
         return productRepository.save(product);
+    }
+
+
+    @Transactional
+    public Product saveWithVariants(
+            Product product,
+            Set<Long> categoryIds,
+            MultipartFile mainImage,
+            ProductCreateRequest payload,
+            Map<String, MultipartFile> variantImageMap // key -> file (match payload.imageKey)
+    ) {
+        // 1) Ảnh chính
+        String imageName = saveImage(mainImage);
+        product.setImageUrl(imageName);
+
+        // 2) Category
+        Set<Category> cats = categoryRepo.findAllById(categoryIds).stream().collect(Collectors.toSet());
+        if (cats.size() != categoryIds.size()) throw new AppException(ErrorCode.CATEGORY_NOT_FOUND);
+        product.setCategories(cats);
+
+        // 3) Lưu product trước
+        Product saved = productRepository.save(product);
+
+        // Nếu không có phân loại -> return
+        if (payload.getVariantGroups() == null || payload.getVariantGroups().isEmpty()) {
+            return saved;
+        }
+
+        // Giới hạn 2 nhóm
+        List<VariantGroupRequest> groupsReq = payload.getVariantGroups();
+        if (groupsReq.size() > 2) {
+            throw new AppException(ErrorCode.INVALID_REQUEST); // tự định nghĩa message: "Tối đa 2 nhóm phân loại"
+        }
+
+        // 4) Tạo groups + options
+        Map<String, VariantGroup> groupByName = new HashMap<>();
+        for (VariantGroupRequest gr : groupsReq) {
+            if (gr.getName() == null || gr.getName().isBlank()) {
+                throw new AppException(ErrorCode.INVALID_REQUEST); // "Tên nhóm trống"
+            }
+            if (groupByName.containsKey(gr.getName())) {
+                throw new AppException(ErrorCode.INVALID_REQUEST); // "Tên nhóm trùng"
+            }
+
+            VariantGroup g = VariantGroup.builder()
+                    .product(saved)
+                    .name(gr.getName().trim())
+                    .sortOrder(gr.getSortOrder() == null ? 1 : gr.getSortOrder())
+                    .build();
+            g = variantGroupRepository.save(g);
+            groupByName.put(g.getName(), g);
+
+            // Options
+            List<String> opts = Optional.ofNullable(gr.getOptions()).orElseGet(List::of);
+            Set<String> dedup = new LinkedHashSet<>();
+            for (String v : opts) {
+                if (v == null || v.isBlank()) continue;
+                String val = v.trim();
+                if (!dedup.add(val)) continue; // bỏ trùng
+                VariantOption op = VariantOption.builder().group(g).value(val).build();
+                variantOptionRepository.save(op);
+            }
+        }
+
+        // 5) Map {groupName -> {optionValue -> VariantOption}}
+        Map<String, Map<String, VariantOption>> optionLookup = new HashMap<>();
+        for (VariantGroup g : groupByName.values()) {
+            List<VariantOption> ops = variantOptionRepository.findByGroup_Id(g.getId());
+            Map<String, VariantOption> m = new HashMap<>();
+            for (VariantOption o : ops) m.put(o.getValue(), o);
+            optionLookup.put(g.getName(), m);
+        }
+
+        // 6) Tạo ProductVariant theo payload.variants
+        List<VariantRowRequest> rows = Optional.ofNullable(payload.getVariants()).orElseGet(List::of);
+        for (VariantRowRequest row : rows) {
+            // build set option
+            Set<VariantOption> selected = new HashSet<>();
+            Map<String, String> ov = Optional.ofNullable(row.getOptionValues()).orElseGet(Map::of);
+
+            // đảm bảo mỗi group có đúng 1 option
+            for (String gName : groupByName.keySet()) {
+                String val = ov.get(gName);
+                if (val == null) {
+                    throw new AppException(ErrorCode.INVALID_REQUEST); // "Thiếu option cho nhóm " + gName
+                }
+                VariantOption opt = Optional.ofNullable(optionLookup.get(gName).get(val))
+                        .orElseThrow(() -> new AppException(ErrorCode.INVALID_REQUEST)); // "Option không hợp lệ"
+                selected.add(opt);
+            }
+
+            ProductVariant pv = ProductVariant.builder()
+                    .product(saved)
+                    .price(row.getPrice() != null ? row.getPrice() : saved.getPrice())
+                    .stock(row.getStock() != null ? row.getStock() : 0)
+                    .skuCode(row.getSkuCode())
+                    .active(true)
+                    .build();
+
+            // Ảnh biến thể (nếu có) theo imageKey
+            if (row.getImageKey() != null && variantImageMap != null) {
+                MultipartFile f = variantImageMap.get(row.getImageKey());
+                if (f != null && !f.isEmpty()) {
+                    String fn = saveImage(f);
+                    pv.setImageUrl(fn);
+                }
+            }
+
+            pv.setOptions(selected);
+            productVariantRepository.save(pv);
+        }
+
+        return saved;
     }
 
     public Optional<Product> findById(Long id) {
