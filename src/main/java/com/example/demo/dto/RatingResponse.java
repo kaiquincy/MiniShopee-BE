@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Data
 public class RatingResponse {
     private Long id;
-    private Long userId;
+    private String username;
     private Long productId;
     private Long orderItemId;
     private Integer stars;
@@ -18,7 +18,7 @@ public class RatingResponse {
     // CONSTRUCTOR map từ entity
     public RatingResponse(Rating r) {
         this.id = r.getId();
-        this.userId = r.getUser().getId();
+        this.username = r.getUser().getUsername();
         this.productId = r.getProduct().getId();
         this.orderItemId = r.getOrderItem().getId();
         this.stars = r.getStars();
