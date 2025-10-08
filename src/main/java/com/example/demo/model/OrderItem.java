@@ -1,5 +1,8 @@
 package com.example.demo.model;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,7 +27,8 @@ public class OrderItem {
     private Product product;
 
     // Biến thể (nullable)
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "variant_id")
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "variant_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private ProductVariant variant;
 
     @Column(nullable = false)

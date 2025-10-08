@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.controller.OrderController;
 import com.example.demo.dto.ProductCreateRequest;
 import com.example.demo.dto.VariantGroupRequest;
 import com.example.demo.dto.VariantRowRequest;
@@ -19,6 +20,8 @@ import com.example.demo.repository.VariantOptionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -48,6 +51,8 @@ public class ProductService {
     private final VariantGroupRepository variantGroupRepository;
     private final VariantOptionRepository variantOptionRepository;
     private final ProductVariantRepository productVariantRepository;
+
+    private static final Logger logger = LoggerFactory.getLogger(OrderController.class);
 
     @Value("${upload_img_product.path}")
     private String uploadPath;
@@ -80,6 +85,8 @@ public class ProductService {
         // 1) Ảnh chính
         String imageName = saveImage(mainImage);
         product.setImageUrl(imageName);
+
+        logger.info("Image saved: " + mainImage.getOriginalFilename() + " -> " + imageName);
 
         // 2) Category
         Set<Category> cats = categoryRepo.findAllById(categoryIds).stream().collect(Collectors.toSet());

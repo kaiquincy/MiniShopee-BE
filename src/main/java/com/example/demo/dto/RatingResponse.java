@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 public class RatingResponse {
     private Long id;
     private String username;
+    private String avatarUrl;
     private Long productId;
     private Long orderItemId;
     private Integer stars;
@@ -19,6 +20,7 @@ public class RatingResponse {
     public RatingResponse(Rating r) {
         this.id = r.getId();
         this.username = r.getUser().getUsername();
+        this.avatarUrl = r.getUser().getAvatarUrl();
         this.productId = r.getProduct().getId();
         this.orderItemId = r.getOrderItem().getId();
         this.stars = r.getStars();
