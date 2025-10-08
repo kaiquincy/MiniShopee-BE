@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,6 +51,7 @@ public class OrderService {
                 .product(ci.getProduct())
                 .quantity(ci.getQuantity())
                 .price(ci.getProduct().getPrice())
+                .variant(ci.getVariant())
                 .build();
             orderItemRepository.save(oi);
         }
@@ -93,6 +95,16 @@ public class OrderService {
             // 4.2. Chuyển từng OrderItem thành OrderItemResponse
             List<OrderItemResponse> itemDtos = new ArrayList<>();
             for (OrderItem ci : items) {
+                // Biến phụ varients (optionValues)
+                ProductVariant v = ci.getVariant();
+                Map<String,String> optionValues = null;
+                if (v != null && v.getOptions() != null) {
+                    optionValues = v.getOptions().stream().collect(Collectors.toMap(
+                        o -> o.getGroup().getName(),
+                        VariantOption::getValue
+                    ));
+                }
+
                 OrderItemResponse dto = OrderItemResponse.builder()
                     .productId(ci.getProduct().getId())
                     .imageUrl(ci.getProduct().getImageUrl())
@@ -100,6 +112,7 @@ public class OrderService {
                     .quantity(ci.getQuantity())
                     .price(ci.getPrice())
                     .discountPrice(ci.getProduct().getDiscountPrice())
+                    .optionValues(optionValues)
                     .build();
                 itemDtos.add(dto);
             }

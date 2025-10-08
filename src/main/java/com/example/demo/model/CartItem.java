@@ -25,4 +25,9 @@ public class CartItem {
 
     @Column(nullable = false)
     private Integer quantity;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "variant_id")               // nullable: hàng không phân loại
+    private ProductVariant variant;
+    
 }

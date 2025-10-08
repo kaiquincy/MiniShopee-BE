@@ -23,6 +23,10 @@ public class OrderItem {
     @ToString.Exclude @EqualsAndHashCode.Exclude
     private Product product;
 
+    // Biến thể (nullable)
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "variant_id")
+    private ProductVariant variant;
+
     @Column(nullable = false)
     private Integer quantity;
 

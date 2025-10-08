@@ -5,14 +5,18 @@ import com.example.demo.dto.*;
 import com.example.demo.exception.ErrorCode;
 import com.example.demo.model.Cart;
 import com.example.demo.model.CartItem;
+import com.example.demo.model.Product;
+import com.example.demo.model.VariantOption;
 import com.example.demo.service.CartService;
 import com.example.demo.service.UserService;
+import com.example.demo.model.ProductVariant;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 //Cart đại diện cho giỏ hàng (thuộc về user), còn CartItem mới là entity chứa productId, quantity và liên kết đến Cart.
 @RestController
@@ -68,10 +72,18 @@ public class CartController {
     @PostMapping
     public ApiResponse<String> addItem(
             @RequestParam Long productId,
+            @RequestParam(required = false) Long variantId, // NEW
             @RequestParam int quantity) {
-        ApiResponse<String> apiResponse = new ApiResponse<>();
-        apiResponse.setResult(cartService.addItem(userService.getCurrentUserId(), productId, quantity));
-        return apiResponse;
+
+        ApiResponse<String> api = new ApiResponse<>();
+        String msg = cartService.addItem(
+                userService.getCurrentUserId(),
+                productId,
+                variantId,  
+                quantity
+        );
+        api.setResult(msg);
+        return api;
     }
 
     @DeleteMapping("/items/{itemId}")
@@ -90,18 +102,62 @@ public class CartController {
         return apiResponse;
     }
 
-    private CartItemResponse toItemResponse(CartItem ci) {
-        var p = ci.getProduct();
+    // private CartItemResponse toItemResponse(CartItem ci) {
+    //     var p = ci.getProduct();
+    //     double price = p.getPrice();
+    //     int qty = ci.getQuantity();
+    //     return new CartItemResponse(
+    //         ci.getId(),
+    //         p.getId(),
+    //         p.getName(),
+    //         p.getImageUrl(),
+    //         price,
+    //         qty,
+    //         price * qty
+    //     );
+    // }
+
+    private CartItemResponse toItemResponse(CartItem it) {
+        Product p = it.getProduct();
+        ProductVariant v = it.getVariant(); // có thể null
+
+        // Ảnh ưu tiên: variant -> product
+        String image = null;
+        if (v != null && v.getImageUrl() != null) {
+            image = v.getImageUrl();
+        } else {
+            image = p.getImageUrl();
+        }
+
+        // Map optionValues {groupName: optionValue}
+        Map<String,String> optionValues = null;
+        if (v != null && v.getOptions() != null) {
+            optionValues = v.getOptions().stream().collect(Collectors.toMap(
+                o -> o.getGroup().getName(),
+                VariantOption::getValue
+            ));
+        }
+
+        // Giá hiện tại để so sánh (không dùng để tính total)
         double price = p.getPrice();
-        int qty = ci.getQuantity();
-        return new CartItemResponse(
-            ci.getId(),
-            p.getId(),
-            p.getName(),
-            p.getImageUrl(),
-            price,
-            qty,
-            price * qty
-        );
+
+        int stockNow = (v != null)
+            ? (v.getStock() == null ? 0 : v.getStock())
+            : (p.getQuantity() == null ? 0 : p.getQuantity());
+
+        return CartItemResponse.builder()
+            .itemId(it.getId())
+            .productId(p.getId())
+            .productName(p.getName())
+            .productImageUrl(image)
+            .productPrice(price)
+            .variantId(v != null ? v.getId() : null)
+            .optionValues(optionValues)
+            .skuCode(v != null ? v.getSkuCode() : p.getSku())
+            .variantStock(v != null ? v.getStock() : null)
+            .quantity(it.getQuantity())
+            .totalPrice(p.getPrice() * it.getQuantity())
+            .inStock(stockNow >= it.getQuantity())
+            .build();
     }
 }

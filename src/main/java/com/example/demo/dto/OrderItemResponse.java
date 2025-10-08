@@ -1,5 +1,7 @@
 package com.example.demo.dto;
 
+import java.util.Map;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -12,4 +14,5 @@ public class OrderItemResponse {
     private String productName;
     private int quantity;
     private double price;
+    private Map<String, String> optionValues; // {"Color":"Red","Size":"M"}
 }
