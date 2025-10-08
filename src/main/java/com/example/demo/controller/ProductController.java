@@ -148,6 +148,14 @@ public class ProductController {
             var categoryIds = p.getCategories() == null ? java.util.List.<Long>of()
                     : p.getCategories().stream().map(Category::getId).toList();
 
+            String categoryName = "";
+            if (p.getCategories() != null && !p.getCategories().isEmpty()) {
+                categoryName = p.getCategories().stream()
+                        .map(Category::getName)
+                        .collect(Collectors.joining(" > "));
+            }
+
+
             // Build response chi tiết
             ProductDetailResponse dto = ProductDetailResponse.builder()
                     .id(p.getId())
@@ -160,6 +168,7 @@ public class ProductController {
                     .sku(p.getSku())
                     .brand(p.getBrand())
                     .categoryIds(categoryIds)
+                    .categoryName(categoryName) 
                     .variantGroups(groupDtos)
                     .variants(variantDtos)
                     .build();

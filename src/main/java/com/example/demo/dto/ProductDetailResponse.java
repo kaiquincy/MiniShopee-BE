@@ -17,6 +17,7 @@ public class ProductDetailResponse {
     private String brand;
 
     private List<Long> categoryIds;
+    private String categoryName;
 
     private List<VariantGroupDto> variantGroups;
     private List<VariantDto> variants;

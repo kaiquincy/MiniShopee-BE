@@ -104,10 +104,17 @@ public class OrderService {
                         VariantOption::getValue
                     ));
                 }
+                // Ảnh ưu tiên: variant -> product
+                String image = null;
+                if (v != null && v.getImageUrl() != null) {
+                    image = v.getImageUrl();
+                } else {
+                    image = ci.getProduct().getImageUrl();
+                }
 
                 OrderItemResponse dto = OrderItemResponse.builder()
                     .productId(ci.getProduct().getId())
-                    .imageUrl(ci.getProduct().getImageUrl())
+                    .imageUrl(image)
                     .productName(ci.getProduct().getName())
                     .quantity(ci.getQuantity())
                     .price(ci.getPrice())
