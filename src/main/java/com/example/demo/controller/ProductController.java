@@ -27,6 +27,8 @@ import com.example.demo.service.ProductService;
 import com.example.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
@@ -52,7 +54,7 @@ public class ProductController {
     private final VariantGroupRepository variantGroupRepository;
     private final VariantOptionRepository variantOptionRepository;
     private final ProductVariantRepository productVariantRepository;
-
+    private final Logger logger = LoggerFactory.getLogger(ProductController.class);
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<ProductResponse>>> list(
@@ -167,6 +169,9 @@ public class ProductController {
                     .quantity(p.getQuantity())
                     .sku(p.getSku())
                     .brand(p.getBrand())
+                    .type(p.getType())
+                    .status(p.getStatus())
+                    .weight(p.getWeight())
                     .categoryIds(categoryIds)
                     .categoryName(categoryName) 
                     .variantGroups(groupDtos)
@@ -289,7 +294,7 @@ public class ProductController {
 
 
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, path = "/test")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE  , path = "/test")
     public ResponseEntity<ApiResponse<ProductResponse>> create2(
             @RequestPart(value = "img", required = false) MultipartFile image,
             @RequestPart("payload") ProductCreateRequest payload,
@@ -297,6 +302,9 @@ public class ProductController {
             @RequestParam(required = false)
             org.springframework.util.MultiValueMap<String, MultipartFile> fileMap
     ) {
+
+        logger.info("Received create2 request with payload: " + payload);
+
         ApiResponse<ProductResponse> resp = new ApiResponse<>();
 
         // --- Validate cơ bản (lấy từ payload) ---

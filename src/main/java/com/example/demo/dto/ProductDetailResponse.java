@@ -4,6 +4,9 @@ import lombok.*;
 import java.util.List;
 import java.util.Map;
 
+import com.example.demo.enums.ProductStatus;
+import com.example.demo.enums.ProductType;
+
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class ProductDetailResponse {
     private Long id;
@@ -15,6 +18,9 @@ public class ProductDetailResponse {
     private Integer quantity;
     private String sku;
     private String brand;
+    private Double weight;
+    private ProductType type;
+    private ProductStatus status;
 
     private List<Long> categoryIds;
     private String categoryName;
