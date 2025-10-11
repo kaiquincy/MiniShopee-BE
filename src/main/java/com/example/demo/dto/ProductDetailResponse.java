@@ -19,6 +19,7 @@ public class ProductDetailResponse {
     private String sku;
     private String brand;
     private Double weight;
+    private String dimensions;
     private ProductType type;
     private ProductStatus status;
     private Boolean isFeatured;

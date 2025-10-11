@@ -171,6 +171,7 @@ public class ProductController {
                     .brand(p.getBrand())
                     .type(p.getType())
                     .status(p.getStatus())
+                    .dimensions(p.getDimensions())
                     .weight(p.getWeight())
                     .isFeatured(p.getIsFeatured())
                     .categoryIds(categoryIds)
