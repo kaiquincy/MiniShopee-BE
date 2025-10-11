@@ -21,7 +21,7 @@ public class ProductDetailResponse {
     private Double weight;
     private ProductType type;
     private ProductStatus status;
-
+    private Boolean isFeatured;
     private List<Long> categoryIds;
     private String categoryName;
 

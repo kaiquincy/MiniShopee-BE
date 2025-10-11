@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -59,9 +60,12 @@ public class ProductService {
 
 
     public Product save(Product product, Set<Long> categoryIds, MultipartFile image) {
-        // Lưu ảnh và lấy tên file
-        String imageName = saveImage(image);
-
+        
+        // Update Ảnh (nếu có)
+        if (image != null && !image.isEmpty()) {
+            String imageName = saveImage(image);
+            product.setImageUrl(imageName);
+        };
 
         Set<Category> cats = categoryRepo.findAllById(categoryIds)
             .stream().collect(Collectors.toSet());
@@ -69,9 +73,232 @@ public class ProductService {
             throw new AppException(ErrorCode.CATEGORY_NOT_FOUND);
         }
         product.setCategories(cats);
-        product.setImageUrl(imageName);
+        
         return productRepository.save(product);
     }
+
+
+    @Transactional
+    public Product updateWithVariants(
+            Product existing,
+            Set<Long> categoryIds,
+            MultipartFile mainImage,
+            ProductCreateRequest payload,                 // tái dùng schema matrix như create
+            Map<String, MultipartFile> variantImageMap,  // key->file (match imageKey)
+            boolean replaceGroups,                       // true: rebuild nhóm từ payload; false: merge thêm option nếu thiếu
+            boolean deleteMissingVariants                // true: xóa/deactive các variant không còn trong payload
+    ) {
+        // --- 1) ẢNH CHÍNH ---
+        if (mainImage != null && !mainImage.isEmpty()) {
+            String old = existing.getImageUrl();
+            String imageName = saveImage(mainImage);
+            existing.setImageUrl(imageName);
+            if (old != null && !old.isBlank()) deleteImageQuietly(old);
+        }
+
+        // --- 2) CATEGORIES ---
+        if (categoryIds != null) {
+            if (categoryIds.isEmpty()) {
+                existing.setCategories(java.util.Collections.emptySet());
+            } else {
+                Set<Category> cats = new java.util.HashSet<>();
+                categoryRepo.findAllById(categoryIds).forEach(cats::add);
+                Set<Long> foundIds = cats.stream().map(Category::getId).collect(Collectors.toSet());
+                Set<Long> missing = new java.util.HashSet<>(categoryIds); missing.removeAll(foundIds);
+                if (!missing.isEmpty()) throw new AppException(ErrorCode.CATEGORY_NOT_FOUND);
+                existing.setCategories(cats);
+            }
+        }
+
+        // --- 3) KHÔNG CÓ VARIANT -> chỉ lưu product ---
+        if (payload.getVariantGroups() == null || payload.getVariantGroups().isEmpty()) {
+            return productRepository.save(existing);
+        }
+        List<VariantGroupRequest> groupsReq = payload.getVariantGroups();
+        if (groupsReq.size() > 2) throw new AppException(ErrorCode.INVALID_REQUEST); // giới hạn 2 nhóm
+
+        // --- 4) BUILD / MERGE NHÓM & OPTION ---
+        // 4.1 Lấy nhóm hiện có theo thứ tự tạo (nếu cần)
+        List<VariantGroup> existingGroups = variantGroupRepository.findByProduct_IdOrderBySortOrderAsc(existing.getId());
+
+        Map<String, VariantGroup> groupByName = new HashMap<>();
+        if (replaceGroups) {
+            // XÓA toàn bộ group/option cũ -> tạo lại đúng như payload
+            // (tuỳ RDBMS, bạn có thể có cascade orphanRemoval=true ở entity để đơn giản)
+            // Ở đây minh hoạ xoá tay:
+            for (VariantGroup g : existingGroups) {
+                // xoá options
+                List<VariantOption> ops = variantOptionRepository.findByGroup_Id(g.getId());
+                variantOptionRepository.deleteAll(ops);
+            }
+            variantGroupRepository.deleteAll(existingGroups);
+            existingGroups.clear();
+
+            int idx = 1;
+            for (VariantGroupRequest gr : groupsReq) {
+                if (gr.getName() == null || gr.getName().isBlank())
+                    throw new AppException(ErrorCode.INVALID_REQUEST);
+                if (groupByName.containsKey(gr.getName()))
+                    throw new AppException(ErrorCode.INVALID_REQUEST); // tên nhóm trùng trong payload
+
+                VariantGroup g = VariantGroup.builder()
+                        .product(existing)
+                        .name(gr.getName().trim())
+                        .sortOrder(gr.getSortOrder() == null ? idx++ : gr.getSortOrder())
+                        .build();
+                g = variantGroupRepository.save(g);
+                groupByName.put(g.getName(), g);
+
+                // tạo options (dedup)
+                Set<String> dedup = new LinkedHashSet<>();
+                for (String v : Optional.ofNullable(gr.getOptions()).orElseGet(List::of)) {
+                    if (v == null || v.isBlank()) continue;
+                    String val = v.trim();
+                    if (!dedup.add(val)) continue;
+                    variantOptionRepository.save(VariantOption.builder().group(g).value(val).build());
+                }
+            }
+        } else {
+            // MERGE: giữ nhóm cũ; nhóm nào chưa có thì thêm; option nào chưa có thì thêm
+            // map nhóm cũ theo tên
+            Map<String, VariantGroup> oldByName = existingGroups.stream()
+                    .collect(Collectors.toMap(VariantGroup::getName, g -> g, (a,b)->a, LinkedHashMap::new));
+
+            // tạo/merge nhóm theo payload
+            int defaultSort = existingGroups.size() + 1;
+            for (VariantGroupRequest gr : groupsReq) {
+                if (gr.getName() == null || gr.getName().isBlank())
+                    throw new AppException(ErrorCode.INVALID_REQUEST);
+                String gName = gr.getName().trim();
+
+                VariantGroup g = oldByName.get(gName);
+                if (g == null) {
+                    g = VariantGroup.builder()
+                            .product(existing)
+                            .name(gName)
+                            .sortOrder(gr.getSortOrder() == null ? defaultSort++ : gr.getSortOrder())
+                            .build();
+                    g = variantGroupRepository.save(g);
+                } else {
+                    // có thể cập nhật sortOrder nếu payload cung cấp
+                    if (gr.getSortOrder() != null) g.setSortOrder(gr.getSortOrder());
+                    g = variantGroupRepository.save(g);
+                }
+                groupByName.put(g.getName(), g);
+
+                // merge options
+                Map<String, VariantOption> optMap = variantOptionRepository.findByGroup_Id(g.getId())
+                        .stream().collect(Collectors.toMap(VariantOption::getValue, x -> x));
+                for (String v : Optional.ofNullable(gr.getOptions()).orElseGet(List::of)) {
+                    if (v == null || v.isBlank()) continue;
+                    String val = v.trim();
+                    if (!optMap.containsKey(val)) {
+                        variantOptionRepository.save(VariantOption.builder().group(g).value(val).build());
+                    }
+                }
+            }
+        }
+
+        // --- 5) RELOAD optionLookup theo nhóm mới/merge xong ---
+        Map<String, Map<String, VariantOption>> optionLookup = new HashMap<>();
+        List<VariantGroup> orderedGroups = groupByName.values().stream()
+                .sorted(java.util.Comparator.comparingInt(VariantGroup::getSortOrder))
+                .collect(Collectors.toList());
+        for (VariantGroup g : orderedGroups) {
+            Map<String, VariantOption> m = variantOptionRepository.findByGroup_Id(g.getId())
+                    .stream().collect(Collectors.toMap(VariantOption::getValue, x -> x));
+            optionLookup.put(g.getName(), m);
+        }
+
+        // --- 6) LẬP CHỮ KÝ (signature) cho mỗi tổ hợp option để map variant ---
+        // signature ví dụ: "Color=Red|Size=S" (đúng thứ tự nhóm)
+        java.util.function.Function<Set<VariantOption>, String> signatureOfOptions = (opts) -> {
+            Map<String, String> g2v = new HashMap<>();
+            for (VariantOption o : opts) {
+                VariantGroup g = o.getGroup();
+                g2v.put(g.getName(), o.getValue());
+            }
+            return orderedGroups.stream()
+                    .map(g -> g.getName() + "=" + g2v.getOrDefault(g.getName(), ""))
+                    .collect(Collectors.joining("|"));
+        };
+
+        // Map các variant hiện có theo signature
+        List<ProductVariant> currentVariants = productVariantRepository.findByProduct_Id(existing.getId());
+        Map<String, ProductVariant> pvBySig = new HashMap<>();
+        for (ProductVariant pv : currentVariants) {
+            String sig = signatureOfOptions.apply(pv.getOptions());
+            pvBySig.put(sig, pv);
+        }
+
+        // --- 7) DUYỆT PAYLOAD ROWS -> UPSERT VARIANT THEO SIGNATURE ---
+        Set<String> seenSignatures = new HashSet<>();
+        List<VariantRowRequest> rows = Optional.ofNullable(payload.getVariants()).orElseGet(List::of);
+
+        for (VariantRowRequest row : rows) {
+            // build option set theo nhóm đã xác nhận
+            Set<VariantOption> selected = new HashSet<>();
+            Map<String, String> ov = Optional.ofNullable(row.getOptionValues()).orElseGet(Map::of);
+            for (VariantGroup g : orderedGroups) {
+                String val = ov.get(g.getName());
+                if (val == null) {
+                    throw new AppException(ErrorCode.INVALID_REQUEST); // thiếu option cho nhóm g
+                }
+                VariantOption opt = Optional.ofNullable(optionLookup.get(g.getName()).get(val))
+                        .orElseThrow(() -> new AppException(ErrorCode.INVALID_REQUEST)); // option không hợp lệ
+                selected.add(opt);
+            }
+
+            String sig = signatureOfOptions.apply(selected);
+            seenSignatures.add(sig);
+
+            ProductVariant pv = pvBySig.get(sig);
+            if (pv == null) {
+                pv = new ProductVariant();
+                pv.setProduct(existing);
+                pv.setActive(true);
+            }
+
+            // cập nhật trường cơ bản
+            pv.setOptions(selected);
+            pv.setPrice(row.getPrice() != null ? row.getPrice() : (existing.getPrice() != null ? existing.getPrice() : 0.0));
+            pv.setStock(row.getStock() != null ? row.getStock() : (pv.getStock() != null ? pv.getStock() : 0));
+            pv.setSkuCode(row.getSkuCode() != null ? row.getSkuCode() : pv.getSkuCode());
+
+            // ảnh biến thể nếu có imageKey
+            if (row.getImageKey() != null && variantImageMap != null) {
+                MultipartFile f = variantImageMap.get(row.getImageKey());
+                if (f != null && !f.isEmpty()) {
+                    String oldV = pv.getImageUrl();
+                    String fn = saveImage(f);
+                    pv.setImageUrl(fn);
+                    if (oldV != null && !oldV.isBlank()) deleteImageQuietly(oldV);
+                }
+            }
+
+            productVariantRepository.save(pv);
+            pvBySig.put(sig, pv); // ensure map updated
+        }
+
+        // --- 8) XỬ LÝ VARIANTS KHÔNG CÒN TRONG PAYLOAD ---
+        if (deleteMissingVariants) {
+            for (Map.Entry<String, ProductVariant> e : pvBySig.entrySet()) {
+                if (!seenSignatures.contains(e.getKey())) {
+                    // Chọn 1 trong 2:
+                    // a) XÓA HẲN:
+                    // productVariantRepository.delete(e.getValue());
+                    // b) Hoặc DEACTIVATE:
+                    ProductVariant pv = e.getValue();
+                    pv.setActive(false);
+                    productVariantRepository.save(pv);
+                }
+            }
+        }
+
+        // --- 9) LƯU PRODUCT CUỐI ---
+        return productRepository.save(existing);
+    }
+
 
 
     @Transactional
@@ -243,6 +470,15 @@ public class ProductService {
             return newFilename;
         }
         return null;
+    }
+
+    private void deleteImageQuietly(String filename) {
+        try {
+            java.nio.file.Path target = java.nio.file.Paths.get(uploadPath, filename);
+            java.nio.file.Files.deleteIfExists(target);
+        } catch (Exception ignore) {
+            // nuốt lỗi
+        }
     }
 
 }
