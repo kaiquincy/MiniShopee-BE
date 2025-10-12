@@ -2,6 +2,9 @@ package com.example.demo.repository;
 
 
 import com.example.demo.model.Rating;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
@@ -18,4 +21,12 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
 
     @Query("SELECT COUNT(r) FROM Rating r WHERE r.product.id = :productId")
     Long countByProductId(@Param("productId") Long productId);
+
+    @Query("SELECT r.stars, COUNT(r) FROM Rating r WHERE r.product.id = :productId GROUP BY r.stars")
+    List<Object[]> countRatingsGroupByStars(@Param("productId") Long productId);
+
+    boolean existsByOrderItemId(Long orderItemId);
+
+    @EntityGraph(attributePaths = {"user", "images"})
+    Page<Rating> findByProductId(Long productId, Pageable pageable);
 }

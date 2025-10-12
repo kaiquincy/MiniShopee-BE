@@ -12,10 +12,12 @@ public class RatingResponse {
     private String avatarUrl;
     private Long productId;
     private Long orderItemId;
+    private boolean anonymous;
     private Integer stars;
     private String comment;
     private LocalDateTime createdAt;
 
+    
     // CONSTRUCTOR map từ entity
     public RatingResponse(Rating r) {
         this.id = r.getId();
@@ -24,6 +26,7 @@ public class RatingResponse {
         this.productId = r.getProduct().getId();
         this.orderItemId = r.getOrderItem().getId();
         this.stars = r.getStars();
+        this.anonymous = r.getAnonymous() != null ? r.getAnonymous() : false;
         this.comment = r.getComment();
         this.createdAt = r.getCreatedAt();
     }

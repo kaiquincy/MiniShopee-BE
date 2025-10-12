@@ -1,5 +1,6 @@
 package com.example.demo.exception;
 
+import org.antlr.v4.runtime.atn.SemanticContext.OR;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 
@@ -63,7 +64,9 @@ public enum ErrorCode {
     
     OUT_OF_STOCK(2302, "Out of stock", HttpStatus.BAD_REQUEST),
     INVALID_STATUS_TRANSITION(2303, "You can't change the status of order like that! Read OrderStatusSerive.java for receipt", HttpStatus.BAD_REQUEST), 
-    INVALID_REQUEST(2304, "Invalid request", HttpStatus.BAD_REQUEST)
+    INVALID_REQUEST(2304, "Invalid request", HttpStatus.BAD_REQUEST),
+
+    ORDER_NOT_COMPLETED(2305, "Order is not completed yet", HttpStatus.BAD_REQUEST)
     ;
 
 

@@ -5,6 +5,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "ratings",
@@ -34,6 +35,29 @@ public class Rating {
     /** Nội dung đánh giá (tuỳ chọn) */
     private String comment;
 
+    private Boolean anonymous;
+
+    @OneToMany(
+    mappedBy = "rating",
+    cascade = CascadeType.ALL,
+    orphanRemoval = true
+    )
+    @Builder.Default
+    private List<RatingImage> images = new java.util.ArrayList<>();
+
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    public void addImage(RatingImage img) {
+        if (img == null) return;
+        img.setRating(this);
+        this.images.add(img);
+    }
+
+    public void removeImage(RatingImage img) {
+        if (img == null) return;
+        img.setRating(null);
+        this.images.remove(img);
+    }
+
 }
