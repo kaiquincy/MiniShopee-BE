@@ -408,6 +408,36 @@ public class ProductController {
 
 
 
+    @GetMapping("/{id}/similar")
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> getSimilarByCategory(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "12") int limit,
+            @RequestParam(value = "priceBand", required = false) Double priceBand
+    ) {
+        ApiResponse<List<ProductResponse>> resp = new ApiResponse<>();
+        try {
+            List<Product> products = productService.findSimilarByCategory(id, limit, priceBand);
+            List<ProductResponse> dtoList = products.stream()
+                    .map(ProductResponse::new)
+                    .toList();
+
+            resp.setResult(dtoList);
+            resp.setMessage("Lấy sản phẩm tương tự thành công");
+            return ResponseEntity.ok(resp);
+
+        } catch (AppException ex) {
+            resp.setCode(ex.getErrorCode().getCode());
+            resp.setMessage(ex.getMessage());
+            return ResponseEntity.status(ex.getErrorCode().getStatusCode()).body(resp);
+
+        } catch (Exception ex) {
+            resp.setCode(ErrorCode.UNCATEGORIZE_EXCEPTION.getCode());
+            resp.setMessage("Lỗi khi lấy sản phẩm tương tự - " + ex.getMessage());
+            return ResponseEntity
+                    .status(ErrorCode.UNCATEGORIZE_EXCEPTION.getStatusCode())
+                    .body(resp);
+        }
+    }
 
 
 

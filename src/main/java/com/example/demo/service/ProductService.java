@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -425,6 +426,29 @@ public class ProductService {
         }
         return productRepository.findAll(pageable);
     }
+
+    public List<Product> findSimilarByCategory(Long productId, int limit, Double priceBand) {
+        Product base = productRepository.findById(productId)
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED));
+
+        Set<Category> categories = base.getCategories();
+        if (categories == null || categories.isEmpty()) return List.of();
+
+        Double min = null;
+        Double max = null;
+
+        if (priceBand != null && priceBand > 0) {
+            Double price = base.getPrice();
+            if (price != null) {
+                min = price * (1 - priceBand);
+                max = price * (1 + priceBand);
+            }
+        }
+
+        return productRepository.findSimilarByCategory(
+                categories, base.getId(), min, max, PageRequest.of(0, limit));
+    }
+
 
     public void deleteById(Long id) {
         productRepository.deleteById(id);
