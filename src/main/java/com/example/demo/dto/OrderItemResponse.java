@@ -8,6 +8,7 @@ import lombok.Data;
 @Data
 @Builder
 public class OrderItemResponse {
+    private Long orderItemId;
     private Long productId;
     private String imageUrl;
     private double discountPrice;

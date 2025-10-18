@@ -24,6 +24,9 @@ import com.example.demo.dto.RatingResponse;
 import com.example.demo.dto.RatingResponse2;
 import com.example.demo.exception.ErrorCode;
 import com.example.demo.service.RatingService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.springframework.data.domain.Sort;
 import lombok.RequiredArgsConstructor;
 
@@ -36,17 +39,30 @@ public class RatingController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<RatingResponse>> addRatingWithImages(
-            @RequestPart("payload") RatingRequest req,
-            @RequestPart(value = "images", required = false) java.util.List<MultipartFile> images
+            @RequestPart(value = "payload", required = true) String jsonPayload,  // Đổi key thành 'data' để khớp frontend, nhận String
+            @RequestPart(value = "images", required = false) List<MultipartFile> images
     ) {
         ApiResponse<RatingResponse> resp = new ApiResponse<>();
-
-        if (req.getOrderItemId() == null || req.getStars() == null || req.getStars() < 1 || req.getStars() > 5) {
+        
+        RatingRequest req;
+        try {
+            // Parse JSON string thủ công
+            ObjectMapper mapper = new ObjectMapper();
+            req = mapper.readValue(jsonPayload, RatingRequest.class);
+        } catch (JsonProcessingException e) {
             resp.setCode(ErrorCode.INVALID_INPUT_RATETING.getCode());
-            resp.setMessage("orderItemId & stars (1..5) are required");
+            resp.setMessage("Payload JSON không hợp lệ: " + e.getMessage());
             return ResponseEntity.status(ErrorCode.INVALID_INPUT_RATETING.getStatusCode()).body(resp);
         }
 
+        // Validate (giữ nguyên, nhưng điều chỉnh nếu fields không khớp, ví dụ: dùng req.getProductId() nếu RatingRequest có field đó)
+        if (req.getOrderItemId() == null || req.getStars() == null || req.getStars() < 1 || req.getStars() > 5) {  // Hoặc req.getProductId() nếu validate cái đó
+            resp.setCode(ErrorCode.INVALID_INPUT_RATETING.getCode());
+            resp.setMessage("orderItemId & stars (1..5) are required");  // Cập nhật message nếu fields thay đổi
+            return ResponseEntity.status(ErrorCode.INVALID_INPUT_RATETING.getStatusCode()).body(resp);
+        }
+
+        // Gọi service (truyền req đã parse)
         RatingResponse rr = ratingService.addRating(req, images);
         resp.setResult(rr);
         resp.setMessage("Đánh giá thành công");

@@ -113,6 +113,7 @@ public class OrderService {
                 }
 
                 OrderItemResponse dto = OrderItemResponse.builder()
+                    .orderItemId(ci.getId())
                     .productId(ci.getProduct().getId())
                     .imageUrl(image)
                     .productName(ci.getProduct().getName())
