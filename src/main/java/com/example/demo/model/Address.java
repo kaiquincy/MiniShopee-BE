@@ -20,6 +20,9 @@ public class Address {
     @ToString.Exclude @EqualsAndHashCode.Exclude
     private User user;
 
+    @Column(length = 50)
+    private String label;
+
     @Column(nullable = false, length = 120)
     private String fullName;     // tên người nhận
 

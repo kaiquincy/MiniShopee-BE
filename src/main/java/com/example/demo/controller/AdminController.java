@@ -85,6 +85,7 @@ public class AdminController {
                     u.getAvatarUrl(),
                     u.getStatus(),
                     u.getFullName(),
+                    u.getGender(),
                     u.getDateOfBirth(),
                     u.getCreatedAt(),
                     u.getUpdatedAt(),

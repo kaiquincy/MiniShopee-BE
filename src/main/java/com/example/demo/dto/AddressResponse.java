@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 public class AddressResponse {
     private Long id;
     private String fullName;
+    private String label;
     private String phone;
     private String line1;
     private String ward;
@@ -21,6 +22,7 @@ public class AddressResponse {
     public AddressResponse(Address a) {
         this.id = a.getId();
         this.fullName = a.getFullName();
+        this.label = a.getLabel();
         this.phone = a.getPhone();
         this.line1 = a.getLine1();
         this.ward = a.getWard();

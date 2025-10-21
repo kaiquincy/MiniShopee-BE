@@ -38,6 +38,7 @@ public class AddressService {
         Address a = Address.builder()
                 .user(user)
                 .fullName(req.getFullName())
+                .label(req.getLabel())
                 .phone(req.getPhone())
                 .line1(req.getLine1())
                 .ward(req.getWard())
@@ -69,6 +70,7 @@ public class AddressService {
                 .orElseThrow(() -> new AppException(ErrorCode.ADDRESS_NOT_EXISTED));
 
         if (req.getFullName() != null) a.setFullName(req.getFullName());
+        if (req.getLabel() != null) a.setLabel(req.getLabel());
         if (req.getPhone() != null) a.setPhone(req.getPhone());
         if (req.getLine1() != null) a.setLine1(req.getLine1());
         if (req.getWard() != null) a.setWard(req.getWard());
