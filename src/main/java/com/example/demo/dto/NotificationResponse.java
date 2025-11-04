@@ -9,7 +9,9 @@ import java.time.LocalDateTime;
 public class NotificationResponse {
     private Long id;
     private Long userId;
+    private String title;
     private String message;
+    private String imgUrl;
     private String type;
     private Long referenceId;
     private Boolean read;
@@ -19,7 +21,9 @@ public class NotificationResponse {
     public NotificationResponse(Notification n) {
         this.id = n.getId();
         this.userId = n.getUser().getId();
+        this.title = n.getTitle();
         this.message = n.getMessage();
+        this.imgUrl = n.getImgUrl();
         this.type = n.getType();
         this.referenceId = n.getReferenceId();
         this.read = n.getRead();

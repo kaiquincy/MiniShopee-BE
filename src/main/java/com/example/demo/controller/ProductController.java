@@ -4,6 +4,7 @@ package com.example.demo.controller;
 import com.example.demo.dto.ApiResponse;
 import com.example.demo.dto.ProductCreateRequest;
 import com.example.demo.dto.ProductDetailResponse;
+import com.example.demo.dto.ProductGuardrailResult;
 import com.example.demo.exception.AppException;
 import com.example.demo.dto.ProductRequest;
 import com.example.demo.dto.ProductResponse;
@@ -24,6 +25,7 @@ import com.example.demo.repository.UserRepository;
 import com.example.demo.repository.VariantGroupRepository;
 import com.example.demo.repository.VariantOptionRepository;
 import com.example.demo.service.ProductService;
+import com.example.demo.service.ProductValidationService;
 import com.example.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 
@@ -36,6 +38,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -49,6 +52,7 @@ import com.example.demo.model.Category;
 @RequiredArgsConstructor
 public class ProductController {
     private final ProductService productService;
+    private final ProductValidationService validationService;
     private final UserService userService;
     private final UserRepository userReposiroty;
     private final VariantGroupRepository variantGroupRepository;
@@ -172,6 +176,7 @@ public class ProductController {
                     .type(p.getType())
                     .status(p.getStatus())
                     .dimensions(p.getDimensions())
+                    .validationResult(p.getValidationResult())
                     .weight(p.getWeight())
                     .isFeatured(p.getIsFeatured())
                     .categoryIds(categoryIds)
@@ -213,7 +218,7 @@ public class ProductController {
             @RequestParam(value = "weight", required = false) Double weight,
             @RequestParam(value = "dimensions", required = false) String dimensions,
             @RequestParam(value = "isFeatured", required = false) Boolean isFeatured
-            )
+            ) throws IOException
     {
         ApiResponse<ProductResponse> resp = new ApiResponse<>();
         // Validate bắt buộc
@@ -256,6 +261,13 @@ public class ProductController {
                     .body(resp);
         }
 
+
+        // // 1) Gọi checkvalid
+        // ProductGuardrailResult guardrail = validationService.analyze(image.getBytes(), name);
+
+        // // 2) Áp quy tắc chặn (ném 422 nếu fail) — đã có @ControllerAdvice map lỗi
+        // validationService.enforceOrThrow(guardrail);
+
         try {
             User sellerOpt = userReposiroty.findById(sellerId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
@@ -270,7 +282,8 @@ public class ProductController {
                     .sku(sku)
                     .brand(brand)
                     .type(type != null ? ProductType.valueOf(type.toUpperCase()) : null)
-                    .status(status != null ? ProductStatus.valueOf(status.toUpperCase()) : null)
+                    // .status(status != null ? ProductStatus.valueOf(status.toUpperCase()) : null)
+                    .status(ProductStatus.PROCESSING)
                     .weight(weight)
                     .dimensions(dimensions)
                     .isFeatured(isFeatured != null ? isFeatured : false)

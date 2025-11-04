@@ -32,6 +32,7 @@ public class ProductResponse {
     private Integer salesCount;
     private Integer viewCount;
     private Double weight;
+    private String validationResult;
     private String dimensions;
     private Boolean isFeatured;
     private LocalDateTime createdAt;
@@ -67,6 +68,7 @@ public class ProductResponse {
         this.salesCount = product.getSalesCount();
         this.viewCount = product.getViewCount();
         this.weight = product.getWeight();
+        this.validationResult = product.getValidationResult();
         this.dimensions = product.getDimensions();
         this.isFeatured = product.getIsFeatured();
         this.createdAt = product.getCreatedAt();

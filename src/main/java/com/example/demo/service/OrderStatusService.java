@@ -85,11 +85,96 @@ public class OrderStatusService {
         // Notification to user
         notificationService.createNotification(new NotificationRequest() {{
             setUserId(order.getUser().getId());
+            setTitle("ád");
             setMessage("Đơn hàng #" + order.getId() + " chuyển trạng thái: " + from + " → " + target);
-            setType("ORDER_UPDATED");
+            setType(notificationType(from, target));
             setReferenceId(order.getId());
         }});
 
         return new OrderStatusUpdateResponse(orderId, from, target, LocalDateTime.now(), note != null ? note : "OK");
     }
+
+    private String notificationType(OrderStatus from, OrderStatus to) {
+        switch (from) {
+            case PENDING:
+                switch (to) {
+                    case PAID:
+                        return "ORDER_UPDATED_PAID"; // theo yêu cầu
+                    case PROCESSING:
+                        return "ORDER_UPDATED_PROCESSING_FROM_PENDING";
+                    case CANCELLED:
+                        return "ORDER_UPDATED_CANCELLED_FROM_PENDING";
+                    default:
+                        break;
+                }
+                break;
+
+            case PAID:
+                switch (to) {
+                    case PROCESSING:
+                        return "ORDER_UPDATED_PROCESSING_AFTER_PAID";
+                    case CANCELLED:
+                        return "ORDER_UPDATED_CANCELLED_AFTER_PAID";
+                    case REFUNDED:
+                        return "ORDER_UPDATED_REFUNDED_AFTER_PAID";
+                    default:
+                        break;
+                }
+                break;
+
+            case PROCESSING:
+                switch (to) {
+                    case SHIPPING:
+                        return "ORDER_UPDATED_SHIPPING";
+                    case REFUNDED:
+                        return "ORDER_UPDATED_REFUNDED_DURING_PROCESSING";
+                    default:
+                        break;
+                }
+                break;
+
+            case SHIPPING:
+                switch (to) {
+                    case DELIVERED:
+                        return "ORDER_UPDATED_DELIVERED";
+                    case REFUNDED:
+                        return "ORDER_UPDATED_REFUNDED_IN_TRANSIT";
+                    default:
+                        break;
+                }
+                break;
+
+            case DELIVERED:
+                switch (to) {
+                    case COMPLETED:
+                        return "ORDER_UPDATED_COMPLETED";
+                    case REFUNDED:
+                        return "ORDER_UPDATED_REFUNDED_AFTER_DELIVERED";
+                    default:
+                        break;
+                }
+                break;
+
+            case COMPLETED:
+                // Hiện ALLOWED của bạn không cho phép từ COMPLETED sang đâu cả.
+                // Nếu sau này mở REFUNDED, dùng key dưới đây:
+                if (to == OrderStatus.REFUNDED) return "ORDER_UPDATED_REFUNDED_AFTER_COMPLETED";
+                break;
+
+            case CANCELLED:
+                // Không có chuyển tiếp hợp lệ
+                break;
+
+            case REFUNDED:
+                // Không có chuyển tiếp hợp lệ
+                break;
+
+            default:
+                break;
+        }
+
+        // Fallback an toàn: theo trạng thái đích
+        return "ORDER_UPDATED_" + to.name();
+    }
+
 }

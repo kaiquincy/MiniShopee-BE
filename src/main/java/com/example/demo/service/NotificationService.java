@@ -27,7 +27,9 @@ public class NotificationService {
                 ErrorCode.USER_NOT_EXISTED));
         Notification n = Notification.builder()
             .user(user)
+            .title(req.getTitle())
             .message(req.getMessage())
+            .imgUrl(req.getImgUrl())
             .type(req.getType())
             .referenceId(req.getReferenceId())
             .read(false)

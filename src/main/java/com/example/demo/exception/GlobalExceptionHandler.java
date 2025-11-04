@@ -1,6 +1,8 @@
 package com.example.demo.exception;
 
 
+import java.util.Map;
+
 import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +13,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import com.example.demo.dto.ApiResponse;
+import com.example.demo.service.ProductValidationService.ProductValidationException;
+
 
 
 @ControllerAdvice
@@ -65,5 +69,14 @@ public class GlobalExceptionHandler {
         // Bạn có thể ghi log ở mức độ INFO hoặc bỏ qua ngoại lệ này
         // System.out.println("ClientAbortException: " + ex.getMessage());
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @ExceptionHandler(ProductValidationException.class)
+    public ResponseEntity<?> handleProductValidation(ProductValidationException ex) {
+        return ResponseEntity.status(ex.status).body(Map.of(
+            "error", ex.error,
+            "detail", ex.detail,
+            "guardrail", ex.result // trả luôn kết quả để FE hiển thị gợi ý
+        ));
     }
 }

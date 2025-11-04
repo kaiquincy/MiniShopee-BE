@@ -70,6 +70,9 @@ public class Product {
 
     private Boolean isFeatured;
 
+    @Column(name = "validation_result", columnDefinition = "TEXT")
+    private String validationResult;
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude @EqualsAndHashCode.Exclude
     private Set<VariantGroup> variantGroups = new HashSet<>();

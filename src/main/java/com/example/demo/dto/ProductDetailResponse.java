@@ -25,6 +25,7 @@ public class ProductDetailResponse {
     private Boolean isFeatured;
     private List<Long> categoryIds;
     private String categoryName;
+    private String validationResult;
 
     private List<VariantGroupDto> variantGroups;
     private List<VariantDto> variants;

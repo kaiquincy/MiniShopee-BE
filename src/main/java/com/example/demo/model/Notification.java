@@ -19,9 +19,15 @@ public class Notification {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column
+    private String title;
+
     /** Nội dung thông báo */
     @Column(nullable = false)
     private String message;
+
+    @Column
+    private String imgUrl;
 
     /** Kiểu thông báo (ORDER_UPDATED, RATING, v.v.) */
     @Column(nullable = false)
