@@ -40,6 +40,7 @@ public class SecurityConfig {
             )
             // Phân quyền các endpoint
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/ws/**").permitAll()
                 // Public: đăng ký & đăng nhập
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/payments/confirm-webhook").permitAll()

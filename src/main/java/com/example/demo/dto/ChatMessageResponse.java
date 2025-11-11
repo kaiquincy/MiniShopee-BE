@@ -11,6 +11,7 @@ public class ChatMessageResponse {
     private Long id;
     private Long roomId;
     private Long senderId;
+    private String senderUsername;
     private MessageType type;
     private String content;
     private LocalDateTime createdAt;
@@ -20,6 +21,7 @@ public class ChatMessageResponse {
         this.id = m.getId();
         this.roomId = m.getRoom().getId();
         this.senderId = m.getSender().getId();
+        this.senderUsername = m.getSender().getUsername();
         this.type = m.getType();
         this.content = m.getContent();
         this.createdAt = m.getCreatedAt();

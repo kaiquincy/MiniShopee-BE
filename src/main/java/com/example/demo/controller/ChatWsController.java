@@ -19,6 +19,8 @@ public class ChatWsController {
     public void send(ChatSendMessageRequest req, Principal principal) {
         // Không trả @SendTo vì ta push chủ động bằng SimpMessagingTemplate
         ChatMessageResponse out = chatService.send(req, principal);
+        // String username = principal.getName();
+        // chatService.sendByUsername(username, req);
         // done
     }
 }
