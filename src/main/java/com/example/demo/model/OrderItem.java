@@ -27,7 +27,7 @@ public class OrderItem {
     private Product product;
 
     // Biến thể (nullable)
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "variant_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "variant_id", nullable = true)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     private ProductVariant variant;
 
