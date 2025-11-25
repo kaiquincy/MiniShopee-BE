@@ -42,4 +42,8 @@ public class Order {
         this.createdAt = LocalDateTime.now();
         if (this.status == null) this.status = "PENDING";
     }
+
+//    public Object getPaymentMethod() {
+//        return ;
+//    }
 }

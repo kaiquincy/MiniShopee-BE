@@ -1,10 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.ApiResponse;
-import com.example.demo.dto.OrderRequest;
-import com.example.demo.dto.OrderResponse;
-import com.example.demo.dto.OrderResponseDetail;
-import com.example.demo.dto.PaymentResponse;
+import com.example.demo.dto.*;
 import com.example.demo.enums.PaymentMethod;
 import com.example.demo.exception.AppException;
 import com.example.demo.exception.ErrorCode;
@@ -15,8 +11,13 @@ import com.example.demo.model.Order;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,14 +62,34 @@ public class OrderController {
     }
 
     @GetMapping
-    public ApiResponse<List<OrderResponseDetail>> listOrders(
+    public ApiResponse<Page<OrderResponseDetail>> listOrders(
+            @RequestParam(required = false) Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status) {
+
+        Long uid = (userId != null ? userId : userService.getCurrentUserId());
+
+        // Create pageable with sort by createdAt descending
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        // Get paginated orders with optional status filter
+        Page<OrderResponseDetail> orders = orderService.getOrdersWithDetailsPaginated(uid, status, pageable);
+
+        ApiResponse<Page<OrderResponseDetail>> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(orders);
+        return apiResponse;
+    }
+
+    @GetMapping("/counts")
+    public ApiResponse<OrderStatusCountResponse> getOrderCounts(
             @RequestParam(required = false) Long userId) {
 
         Long uid = (userId != null ? userId : userService.getCurrentUserId());
-        List<OrderResponseDetail> orders = orderService.getOrdersWithDetails(uid);
+        OrderStatusCountResponse counts = orderService.getOrderCountsByStatus(uid);
 
-        ApiResponse<List<OrderResponseDetail>> apiResponse = new ApiResponse<>();
-        apiResponse.setResult(orders);
+        ApiResponse<OrderStatusCountResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(counts);
         return apiResponse;
     }
 }
