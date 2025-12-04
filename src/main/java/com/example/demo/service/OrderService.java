@@ -29,6 +29,7 @@ public class OrderService {
     private final UserRepository userRepository;
     private final OrderItemRepository orderItemRepository;
     private final CartService cartService;
+    private final RatingRepository ratingRepo;
 
     @Transactional
     public Order placeOrder(Long userId) {
@@ -180,6 +181,9 @@ public class OrderService {
                 image = ci.getProduct().getImageUrl();
             }
 
+            // Check if this order item has been rated
+            boolean hasRating = ratingRepo.findByOrderItemId(ci.getId()).isPresent();
+
             OrderItemResponse dto = OrderItemResponse.builder()
                     .orderItemId(ci.getId())
                     .productId(ci.getProduct().getId())
@@ -189,6 +193,7 @@ public class OrderService {
                     .price(ci.getPrice())
                     .discountPrice(ci.getProduct().getDiscountPrice())
                     .optionValues(optionValues)
+                    .hasRating(hasRating) // Add this
                     .build();
             itemDtos.add(dto);
         }

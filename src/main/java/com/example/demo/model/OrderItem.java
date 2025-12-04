@@ -36,4 +36,7 @@ public class OrderItem {
 
     @Column(nullable = false)
     private Double price; // lưu giá tại thời điểm đặt
+
+    @OneToOne(mappedBy = "orderItem", fetch = FetchType.LAZY)
+    private Rating rating;
 }
