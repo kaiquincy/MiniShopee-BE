@@ -27,7 +27,7 @@ public class OrderItem {
     private Product product;
 
     // Biến thể (nullable)
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "variant_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "variant_id", nullable = true)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     private ProductVariant variant;
 
@@ -36,4 +36,7 @@ public class OrderItem {
 
     @Column(nullable = false)
     private Double price; // lưu giá tại thời điểm đặt
+
+    @OneToOne(mappedBy = "orderItem", fetch = FetchType.LAZY)
+    private Rating rating;
 }

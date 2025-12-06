@@ -16,4 +16,5 @@ public class OrderItemResponse {
     private int quantity;
     private double price;
     private Map<String, String> optionValues; // {"Color":"Red","Size":"M"}
+    private Boolean hasRating;
 }

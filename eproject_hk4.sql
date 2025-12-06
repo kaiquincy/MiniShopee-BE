@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th10 08, 2025 lúc 07:18 PM
+-- Thời gian đã tạo: Th10 15, 2025 lúc 07:44 AM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.2.12
 
@@ -38,16 +38,17 @@ CREATE TABLE `addresses` (
   `phone` varchar(20) NOT NULL,
   `updated_at` datetime(6) NOT NULL,
   `ward` varchar(120) DEFAULT NULL,
-  `user_id` bigint(20) NOT NULL
+  `user_id` bigint(20) NOT NULL,
+  `label` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `addresses`
 --
 
-INSERT INTO `addresses` (`id`, `city`, `created_at`, `district`, `full_name`, `is_default`, `line1`, `phone`, `updated_at`, `ward`, `user_id`) VALUES
-(1, 'TP.HCM', '2025-08-28 19:23:21.000000', 'Quận 1', 'Nguyễn Văn A', b'1', '123 Lê Lợi', '0911111111', '2025-08-28 19:25:13.000000', 'Phường Bến Nghé', 1),
-(2, 'TP.HCM', '2025-08-28 19:39:15.000000', 'Quận 1', 'Nguyễn Văn A', b'0', '456 Nguyễn Huệ', '0922222222', '2025-08-28 19:39:15.000000', 'Phường Bến Thành', 1);
+INSERT INTO `addresses` (`id`, `city`, `created_at`, `district`, `full_name`, `is_default`, `line1`, `phone`, `updated_at`, `ward`, `user_id`, `label`) VALUES
+(1, 'TP.HCM', '2025-08-28 19:23:21.000000', 'Quận 1', 'Trần Bình', b'0', '123 Lê Lợi', '0921551251', '2025-10-20 17:42:44.000000', 'Phường Bến Nghé', 1, 'office'),
+(2, 'TP.HCM', '2025-08-28 19:39:15.000000', 'Quận 1', 'Nguyễn Văn A', b'1', '456 Nguyễn Huệ', '0922222221', '2025-10-20 18:43:33.000000', 'Phường Bến Thành', 1, 'home');
 
 -- --------------------------------------------------------
 
@@ -66,7 +67,8 @@ CREATE TABLE `carts` (
 
 INSERT INTO `carts` (`id`, `user_id`) VALUES
 (1, 1),
-(2, 2);
+(2, 2),
+(3, 3);
 
 -- --------------------------------------------------------
 
@@ -87,8 +89,7 @@ CREATE TABLE `cart_items` (
 --
 
 INSERT INTO `cart_items` (`id`, `quantity`, `cart_id`, `product_id`, `variant_id`) VALUES
-(70, 1, 1, 3, NULL),
-(71, 1, 1, 10, 9);
+(95, 1, 1, 3, 47);
 
 -- --------------------------------------------------------
 
@@ -130,6 +131,27 @@ CREATE TABLE `chat_messages` (
   `sender_id` bigint(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Đang đổ dữ liệu cho bảng `chat_messages`
+--
+
+INSERT INTO `chat_messages` (`id`, `content`, `created_at`, `read_at`, `type`, `room_id`, `sender_id`) VALUES
+(1, '33', '2025-11-11 19:53:32.000000', NULL, 'TEXT', 3, 3),
+(2, 'xin chao', '2025-11-11 19:53:59.000000', NULL, 'TEXT', 3, 3),
+(3, 'h', '2025-11-11 19:55:21.000000', NULL, 'TEXT', 3, 1),
+(4, 'b', '2025-11-11 19:56:04.000000', NULL, 'TEXT', 3, 3),
+(5, 'g', '2025-11-11 19:56:06.000000', NULL, 'TEXT', 3, 1),
+(6, 'hiiii', '2025-11-11 19:56:10.000000', NULL, 'TEXT', 3, 3),
+(7, 'da', '2025-11-11 20:18:55.000000', NULL, 'TEXT', 3, 1),
+(8, 'dâd', '2025-11-11 20:18:57.000000', NULL, 'TEXT', 3, 1),
+(9, 'đawadwad', '2025-11-11 20:19:00.000000', NULL, 'TEXT', 1, 1),
+(10, 'ăd', '2025-11-11 21:47:53.000000', NULL, 'TEXT', 1, 1),
+(11, 'f', '2025-11-12 06:18:57.000000', NULL, 'TEXT', 3, 1),
+(12, 'f', '2025-11-12 06:18:59.000000', NULL, 'TEXT', 3, 1),
+(13, 'd', '2025-11-12 06:19:12.000000', NULL, 'TEXT', 3, 1),
+(14, 'd', '2025-11-12 06:19:13.000000', NULL, 'TEXT', 3, 1),
+(15, 'd', '2025-11-12 06:19:15.000000', NULL, 'TEXT', 3, 1);
+
 -- --------------------------------------------------------
 
 --
@@ -148,7 +170,9 @@ CREATE TABLE `chat_rooms` (
 --
 
 INSERT INTO `chat_rooms` (`id`, `created_at`, `user_a_id`, `user_b_id`) VALUES
-(1, '2025-08-14 19:54:13.000000', 1, 2);
+(1, '2025-08-14 19:54:13.000000', 1, 2),
+(2, '2025-11-11 19:07:37.000000', 2, 3),
+(3, '2025-11-11 19:35:27.000000', 1, 3);
 
 -- --------------------------------------------------------
 
@@ -163,58 +187,90 @@ CREATE TABLE `notifications` (
   `is_read` bit(1) NOT NULL,
   `reference_id` bigint(20) DEFAULT NULL,
   `type` varchar(255) NOT NULL,
-  `user_id` bigint(20) NOT NULL
+  `user_id` bigint(20) NOT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `img_url` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `notifications`
 --
 
-INSERT INTO `notifications` (`id`, `created_at`, `message`, `is_read`, `reference_id`, `type`, `user_id`) VALUES
-(1, '2025-08-08 20:17:46.000000', 'thong bao test', b'1', NULL, 'SYSTEM', 1),
-(2, '2025-08-08 20:18:24.000000', 'thong bao test3333', b'0', NULL, 'SYSTEM', 1),
-(3, '2025-08-14 18:50:51.000000', 'Đơn hàng #7 chuyển trạng thái: PENDING → PROCESSING', b'0', 7, 'ORDER_UPDATED', 1),
-(4, '2025-08-14 18:51:43.000000', 'Đơn hàng #9 chuyển trạng thái: PENDING → CANCELLED', b'1', 9, 'ORDER_UPDATED', 1),
-(5, '2025-08-14 18:51:43.000000', 'Đơn hàng #10 chuyển trạng thái: PENDING → CANCELLED', b'1', 10, 'ORDER_UPDATED', 1),
-(6, '2025-08-14 18:51:43.000000', 'Đơn hàng #11 chuyển trạng thái: PENDING → CANCELLED', b'1', 11, 'ORDER_UPDATED', 1),
-(7, '2025-08-14 18:51:43.000000', 'Đơn hàng #12 chuyển trạng thái: PENDING → CANCELLED', b'1', 12, 'ORDER_UPDATED', 1),
-(8, '2025-08-14 18:51:43.000000', 'Đơn hàng #13 chuyển trạng thái: PENDING → CANCELLED', b'1', 13, 'ORDER_UPDATED', 1),
-(9, '2025-08-14 18:51:43.000000', 'Đơn hàng #14 chuyển trạng thái: PENDING → CANCELLED', b'1', 14, 'ORDER_UPDATED', 1),
-(10, '2025-08-14 18:51:43.000000', 'Đơn hàng #15 chuyển trạng thái: PENDING → CANCELLED', b'0', 15, 'ORDER_UPDATED', 1),
-(11, '2025-08-14 18:51:43.000000', 'Đơn hàng #16 chuyển trạng thái: PENDING → CANCELLED', b'0', 16, 'ORDER_UPDATED', 1),
-(12, '2025-08-14 18:51:43.000000', 'Đơn hàng #17 chuyển trạng thái: PENDING → CANCELLED', b'0', 17, 'ORDER_UPDATED', 1),
-(13, '2025-08-19 21:55:01.000000', 'Đơn hàng #22 chuyển trạng thái: PENDING → CANCELLED', b'1', 22, 'ORDER_UPDATED', 1),
-(14, '2025-08-20 01:01:18.000000', 'Đơn hàng #28 chuyển trạng thái: PENDING → CANCELLED', b'0', 28, 'ORDER_UPDATED', 1),
-(15, '2025-08-20 01:16:18.000000', 'Đơn hàng #29 chuyển trạng thái: PENDING → CANCELLED', b'0', 29, 'ORDER_UPDATED', 1),
-(16, '2025-08-23 20:53:31.000000', 'Đơn hàng #35 chuyển trạng thái: PENDING → CANCELLED', b'0', 35, 'ORDER_UPDATED', 1),
-(17, '2025-08-23 20:53:31.000000', 'Đơn hàng #36 chuyển trạng thái: PENDING → CANCELLED', b'0', 36, 'ORDER_UPDATED', 1),
-(18, '2025-08-23 20:58:31.000000', 'Đơn hàng #37 chuyển trạng thái: PENDING → CANCELLED', b'0', 37, 'ORDER_UPDATED', 1),
-(19, '2025-08-23 20:58:31.000000', 'Đơn hàng #38 chuyển trạng thái: PENDING → CANCELLED', b'0', 38, 'ORDER_UPDATED', 1),
-(20, '2025-08-23 21:03:31.000000', 'Đơn hàng #39 chuyển trạng thái: PENDING → CANCELLED', b'0', 39, 'ORDER_UPDATED', 1),
-(21, '2025-08-28 18:24:45.000000', 'Đơn hàng #7 chuyển trạng thái: PROCESSING → SHIPPING', b'0', 7, 'ORDER_UPDATED', 1),
-(22, '2025-08-28 18:24:47.000000', 'Đơn hàng #7 chuyển trạng thái: SHIPPING → DELIVERED', b'0', 7, 'ORDER_UPDATED', 1),
-(23, '2025-08-28 18:24:55.000000', 'Đơn hàng #7 chuyển trạng thái: DELIVERED → COMPLETED', b'0', 7, 'ORDER_UPDATED', 1),
-(24, '2025-08-28 19:08:19.000000', 'Đơn hàng #40 chuyển trạng thái: PENDING → CANCELLED', b'0', 40, 'ORDER_UPDATED', 1),
-(25, '2025-09-16 18:37:40.000000', 'Đơn hàng #45 chuyển trạng thái: PAID → PROCESSING', b'0', 45, 'ORDER_UPDATED', 1),
-(26, '2025-09-16 18:38:08.000000', 'Đơn hàng #45 chuyển trạng thái: PROCESSING → SHIPPING', b'0', 45, 'ORDER_UPDATED', 1),
-(27, '2025-09-16 18:41:11.000000', 'Đơn hàng #45 chuyển trạng thái: SHIPPING → DELIVERED', b'0', 45, 'ORDER_UPDATED', 1),
-(28, '2025-09-16 18:41:20.000000', 'Đơn hàng #45 chuyển trạng thái: DELIVERED → COMPLETED', b'0', 45, 'ORDER_UPDATED', 1),
-(29, '2025-09-16 18:43:57.000000', 'Đơn hàng #41 chuyển trạng thái: PENDING → CANCELLED', b'0', 41, 'ORDER_UPDATED', 1),
-(30, '2025-09-16 18:49:29.000000', 'Đơn hàng #42 chuyển trạng thái: PENDING → CANCELLED', b'0', 42, 'ORDER_UPDATED', 1),
-(31, '2025-09-16 18:53:30.000000', 'Đơn hàng #43 chuyển trạng thái: PENDING → CANCELLED', b'0', 43, 'ORDER_UPDATED', 1),
-(32, '2025-09-16 18:55:42.000000', 'Đơn hàng #44 chuyển trạng thái: PENDING → CANCELLED', b'0', 44, 'ORDER_UPDATED', 1),
-(33, '2025-09-16 19:28:04.000000', 'Đơn hàng #47 chuyển trạng thái: PAID → PROCESSING', b'0', 47, 'ORDER_UPDATED', 1),
-(34, '2025-09-16 19:30:11.000000', 'Đơn hàng #47 chuyển trạng thái: PROCESSING → SHIPPING', b'0', 47, 'ORDER_UPDATED', 1),
-(35, '2025-09-16 19:30:13.000000', 'Đơn hàng #47 chuyển trạng thái: SHIPPING → DELIVERED', b'0', 47, 'ORDER_UPDATED', 1),
-(36, '2025-09-16 19:30:14.000000', 'Đơn hàng #47 chuyển trạng thái: DELIVERED → COMPLETED', b'0', 47, 'ORDER_UPDATED', 1),
-(37, '2025-09-16 19:30:31.000000', 'Đơn hàng #46 chuyển trạng thái: PAID → PROCESSING', b'0', 46, 'ORDER_UPDATED', 1),
-(38, '2025-09-16 19:52:45.000000', 'Đơn hàng #48 chuyển trạng thái: PAID → PROCESSING', b'0', 48, 'ORDER_UPDATED', 1),
-(39, '2025-09-16 19:53:00.000000', 'Đơn hàng #48 chuyển trạng thái: PROCESSING → SHIPPING', b'0', 48, 'ORDER_UPDATED', 1),
-(40, '2025-09-16 19:53:10.000000', 'Đơn hàng #48 chuyển trạng thái: SHIPPING → DELIVERED', b'0', 48, 'ORDER_UPDATED', 1),
-(41, '2025-09-16 19:53:14.000000', 'Đơn hàng #48 chuyển trạng thái: DELIVERED → COMPLETED', b'0', 48, 'ORDER_UPDATED', 1),
-(42, '2025-10-08 07:43:32.000000', 'Đơn hàng #49 chuyển trạng thái: PENDING → CANCELLED', b'0', 49, 'ORDER_UPDATED', 1),
-(43, '2025-10-08 08:15:49.000000', 'Đơn hàng #50 chuyển trạng thái: PENDING → CANCELLED', b'0', 50, 'ORDER_UPDATED', 1),
-(44, '2025-10-08 10:37:38.000000', 'Đơn hàng #51 chuyển trạng thái: PENDING → CANCELLED', b'0', 51, 'ORDER_UPDATED', 1);
+INSERT INTO `notifications` (`id`, `created_at`, `message`, `is_read`, `reference_id`, `type`, `user_id`, `title`, `img_url`) VALUES
+(1, '2025-08-08 20:17:46.000000', 'thong bao test', b'1', NULL, 'SYSTEM', 1, NULL, NULL),
+(2, '2025-08-08 20:18:24.000000', 'thong bao test3333', b'0', NULL, 'SYSTEM', 1, NULL, NULL),
+(3, '2025-08-14 18:50:51.000000', 'Đơn hàng #7 chuyển trạng thái: PENDING → PROCESSING', b'0', 7, 'ORDER_UPDATED', 1, NULL, NULL),
+(4, '2025-08-14 18:51:43.000000', 'Đơn hàng #9 chuyển trạng thái: PENDING → CANCELLED', b'1', 9, 'ORDER_UPDATED', 1, NULL, NULL),
+(5, '2025-08-14 18:51:43.000000', 'Đơn hàng #10 chuyển trạng thái: PENDING → CANCELLED', b'1', 10, 'ORDER_UPDATED', 1, NULL, NULL),
+(6, '2025-08-14 18:51:43.000000', 'Đơn hàng #11 chuyển trạng thái: PENDING → CANCELLED', b'1', 11, 'ORDER_UPDATED', 1, NULL, NULL),
+(7, '2025-08-14 18:51:43.000000', 'Đơn hàng #12 chuyển trạng thái: PENDING → CANCELLED', b'1', 12, 'ORDER_UPDATED', 1, NULL, NULL),
+(8, '2025-08-14 18:51:43.000000', 'Đơn hàng #13 chuyển trạng thái: PENDING → CANCELLED', b'1', 13, 'ORDER_UPDATED', 1, NULL, NULL),
+(9, '2025-08-14 18:51:43.000000', 'Đơn hàng #14 chuyển trạng thái: PENDING → CANCELLED', b'1', 14, 'ORDER_UPDATED', 1, NULL, NULL),
+(10, '2025-08-14 18:51:43.000000', 'Đơn hàng #15 chuyển trạng thái: PENDING → CANCELLED', b'0', 15, 'ORDER_UPDATED', 1, NULL, NULL),
+(11, '2025-08-14 18:51:43.000000', 'Đơn hàng #16 chuyển trạng thái: PENDING → CANCELLED', b'0', 16, 'ORDER_UPDATED', 1, NULL, NULL),
+(12, '2025-08-14 18:51:43.000000', 'Đơn hàng #17 chuyển trạng thái: PENDING → CANCELLED', b'0', 17, 'ORDER_UPDATED', 1, NULL, NULL),
+(13, '2025-08-19 21:55:01.000000', 'Đơn hàng #22 chuyển trạng thái: PENDING → CANCELLED', b'1', 22, 'ORDER_UPDATED', 1, NULL, NULL),
+(14, '2025-08-20 01:01:18.000000', 'Đơn hàng #28 chuyển trạng thái: PENDING → CANCELLED', b'0', 28, 'ORDER_UPDATED', 1, NULL, NULL),
+(15, '2025-08-20 01:16:18.000000', 'Đơn hàng #29 chuyển trạng thái: PENDING → CANCELLED', b'0', 29, 'ORDER_UPDATED', 1, NULL, NULL),
+(16, '2025-08-23 20:53:31.000000', 'Đơn hàng #35 chuyển trạng thái: PENDING → CANCELLED', b'0', 35, 'ORDER_UPDATED', 1, NULL, NULL),
+(17, '2025-08-23 20:53:31.000000', 'Đơn hàng #36 chuyển trạng thái: PENDING → CANCELLED', b'0', 36, 'ORDER_UPDATED', 1, NULL, NULL),
+(18, '2025-08-23 20:58:31.000000', 'Đơn hàng #37 chuyển trạng thái: PENDING → CANCELLED', b'0', 37, 'ORDER_UPDATED', 1, NULL, NULL),
+(19, '2025-08-23 20:58:31.000000', 'Đơn hàng #38 chuyển trạng thái: PENDING → CANCELLED', b'0', 38, 'ORDER_UPDATED', 1, NULL, NULL),
+(20, '2025-08-23 21:03:31.000000', 'Đơn hàng #39 chuyển trạng thái: PENDING → CANCELLED', b'0', 39, 'ORDER_UPDATED', 1, NULL, NULL),
+(21, '2025-08-28 18:24:45.000000', 'Đơn hàng #7 chuyển trạng thái: PROCESSING → SHIPPING', b'0', 7, 'ORDER_UPDATED', 1, NULL, NULL),
+(22, '2025-08-28 18:24:47.000000', 'Đơn hàng #7 chuyển trạng thái: SHIPPING → DELIVERED', b'0', 7, 'ORDER_UPDATED', 1, NULL, NULL),
+(23, '2025-08-28 18:24:55.000000', 'Đơn hàng #7 chuyển trạng thái: DELIVERED → COMPLETED', b'0', 7, 'ORDER_UPDATED', 1, NULL, NULL),
+(24, '2025-08-28 19:08:19.000000', 'Đơn hàng #40 chuyển trạng thái: PENDING → CANCELLED', b'0', 40, 'ORDER_UPDATED', 1, NULL, NULL),
+(25, '2025-09-16 18:37:40.000000', 'Đơn hàng #45 chuyển trạng thái: PAID → PROCESSING', b'0', 45, 'ORDER_UPDATED', 1, NULL, NULL),
+(26, '2025-09-16 18:38:08.000000', 'Đơn hàng #45 chuyển trạng thái: PROCESSING → SHIPPING', b'0', 45, 'ORDER_UPDATED', 1, NULL, NULL),
+(27, '2025-09-16 18:41:11.000000', 'Đơn hàng #45 chuyển trạng thái: SHIPPING → DELIVERED', b'0', 45, 'ORDER_UPDATED', 1, NULL, NULL),
+(28, '2025-09-16 18:41:20.000000', 'Đơn hàng #45 chuyển trạng thái: DELIVERED → COMPLETED', b'0', 45, 'ORDER_UPDATED', 1, NULL, NULL),
+(29, '2025-09-16 18:43:57.000000', 'Đơn hàng #41 chuyển trạng thái: PENDING → CANCELLED', b'0', 41, 'ORDER_UPDATED', 1, NULL, NULL),
+(30, '2025-09-16 18:49:29.000000', 'Đơn hàng #42 chuyển trạng thái: PENDING → CANCELLED', b'0', 42, 'ORDER_UPDATED', 1, NULL, NULL),
+(31, '2025-09-16 18:53:30.000000', 'Đơn hàng #43 chuyển trạng thái: PENDING → CANCELLED', b'0', 43, 'ORDER_UPDATED', 1, NULL, NULL),
+(32, '2025-09-16 18:55:42.000000', 'Đơn hàng #44 chuyển trạng thái: PENDING → CANCELLED', b'0', 44, 'ORDER_UPDATED', 1, NULL, NULL),
+(33, '2025-09-16 19:28:04.000000', 'Đơn hàng #47 chuyển trạng thái: PAID → PROCESSING', b'0', 47, 'ORDER_UPDATED', 1, NULL, NULL),
+(34, '2025-09-16 19:30:11.000000', 'Đơn hàng #47 chuyển trạng thái: PROCESSING → SHIPPING', b'0', 47, 'ORDER_UPDATED', 1, NULL, NULL),
+(35, '2025-09-16 19:30:13.000000', 'Đơn hàng #47 chuyển trạng thái: SHIPPING → DELIVERED', b'0', 47, 'ORDER_UPDATED', 1, NULL, NULL),
+(36, '2025-09-16 19:30:14.000000', 'Đơn hàng #47 chuyển trạng thái: DELIVERED → COMPLETED', b'0', 47, 'ORDER_UPDATED', 1, NULL, NULL),
+(37, '2025-09-16 19:30:31.000000', 'Đơn hàng #46 chuyển trạng thái: PAID → PROCESSING', b'0', 46, 'ORDER_UPDATED', 1, NULL, NULL),
+(38, '2025-09-16 19:52:45.000000', 'Đơn hàng #48 chuyển trạng thái: PAID → PROCESSING', b'0', 48, 'ORDER_UPDATED', 1, NULL, NULL),
+(39, '2025-09-16 19:53:00.000000', 'Đơn hàng #48 chuyển trạng thái: PROCESSING → SHIPPING', b'0', 48, 'ORDER_UPDATED', 1, NULL, NULL),
+(40, '2025-09-16 19:53:10.000000', 'Đơn hàng #48 chuyển trạng thái: SHIPPING → DELIVERED', b'0', 48, 'ORDER_UPDATED', 1, NULL, NULL),
+(41, '2025-09-16 19:53:14.000000', 'Đơn hàng #48 chuyển trạng thái: DELIVERED → COMPLETED', b'0', 48, 'ORDER_UPDATED', 1, NULL, NULL),
+(42, '2025-10-08 07:43:32.000000', 'Đơn hàng #49 chuyển trạng thái: PENDING → CANCELLED', b'0', 49, 'ORDER_UPDATED', 1, NULL, NULL),
+(43, '2025-10-08 08:15:49.000000', 'Đơn hàng #50 chuyển trạng thái: PENDING → CANCELLED', b'0', 50, 'ORDER_UPDATED', 1, NULL, NULL),
+(44, '2025-10-08 10:37:38.000000', 'Đơn hàng #51 chuyển trạng thái: PENDING → CANCELLED', b'0', 51, 'ORDER_UPDATED', 1, NULL, NULL),
+(45, '2025-10-09 02:13:16.000000', 'Đơn hàng #52 chuyển trạng thái: PENDING → PAID', b'0', 52, 'ORDER_UPDATED', 1, NULL, NULL),
+(46, '2025-10-09 02:13:24.000000', 'Đơn hàng #52 chuyển trạng thái: PAID → PROCESSING', b'0', 52, 'ORDER_UPDATED', 1, NULL, NULL),
+(47, '2025-10-09 02:13:31.000000', 'Đơn hàng #52 chuyển trạng thái: PROCESSING → SHIPPING', b'0', 52, 'ORDER_UPDATED', 1, NULL, NULL),
+(48, '2025-10-09 02:13:34.000000', 'Đơn hàng #52 chuyển trạng thái: SHIPPING → DELIVERED', b'0', 52, 'ORDER_UPDATED', 1, NULL, NULL),
+(49, '2025-10-09 02:13:35.000000', 'Đơn hàng #52 chuyển trạng thái: DELIVERED → COMPLETED', b'0', 52, 'ORDER_UPDATED', 1, NULL, NULL),
+(50, '2025-10-11 18:41:48.000000', 'Đơn hàng #55 chuyển trạng thái: PENDING → PAID', b'0', 55, 'ORDER_UPDATED', 1, NULL, NULL),
+(51, '2025-10-11 18:41:50.000000', 'Đơn hàng #55 chuyển trạng thái: PAID → PROCESSING', b'0', 55, 'ORDER_UPDATED', 1, NULL, NULL),
+(52, '2025-10-11 18:41:52.000000', 'Đơn hàng #55 chuyển trạng thái: PROCESSING → SHIPPING', b'0', 55, 'ORDER_UPDATED', 1, NULL, NULL),
+(53, '2025-10-11 18:41:56.000000', 'Đơn hàng #55 chuyển trạng thái: SHIPPING → DELIVERED', b'0', 55, 'ORDER_UPDATED', 1, NULL, NULL),
+(54, '2025-10-11 18:41:57.000000', 'Đơn hàng #55 chuyển trạng thái: DELIVERED → COMPLETED', b'0', 55, 'ORDER_UPDATED', 1, NULL, NULL),
+(55, '2025-10-12 04:58:51.000000', 'thong bao test3333', b'0', NULL, 'SYSTEM', 1, NULL, NULL),
+(56, '2025-10-12 04:58:52.000000', 'thong bao test3333', b'0', NULL, 'SYSTEM', 1, NULL, NULL),
+(57, '2025-10-18 06:25:21.000000', 'Đơn hàng #56 chuyển trạng thái: PENDING → PAID', b'0', 56, 'ORDER_UPDATED', 1, NULL, NULL),
+(58, '2025-10-18 06:25:25.000000', 'Đơn hàng #56 chuyển trạng thái: PAID → PROCESSING', b'1', 56, 'ORDER_UPDATED', 1, NULL, NULL),
+(59, '2025-10-18 06:25:28.000000', 'Đơn hàng #56 chuyển trạng thái: PROCESSING → SHIPPING', b'1', 56, 'ORDER_UPDATED', 1, NULL, NULL),
+(60, '2025-10-18 06:25:30.000000', 'Đơn hàng #56 chuyển trạng thái: SHIPPING → DELIVERED', b'1', 56, 'ORDER_UPDATED', 1, NULL, NULL),
+(61, '2025-10-18 06:25:34.000000', 'Đơn hàng #56 chuyển trạng thái: DELIVERED → COMPLETED', b'1', 56, 'ORDER_UPDATED', 1, NULL, NULL),
+(62, '2025-10-18 09:15:21.000000', 'thong bao test3333', b'0', NULL, 'SYSTEM', 1, NULL, NULL),
+(63, '2025-10-18 09:15:58.000000', 'day la test !..', b'0', NULL, 'SYSTEM', 1, NULL, NULL),
+(64, '2025-10-18 09:21:30.000000', 'Đơn hàng #57 chuyển trạng thái: PENDING → PAID', b'0', 57, 'ORDER_UPDATED', 1, NULL, NULL),
+(65, '2025-10-19 12:39:10.000000', 'Đơn hàng #57 chuyển trạng thái: PAID → REFUNDED', b'0', 57, 'ORDER_UPDATED', 1, 'Order Refunded', NULL),
+(66, '2025-10-21 18:16:57.000000', 'Đơn hàng #58 chuyển trạng thái: PENDING → PAID', b'0', 58, 'ORDER_UPDATED', 1, 'Seller changed to PAID', NULL),
+(67, '2025-10-21 18:17:35.000000', 'Đơn hàng #58 chuyển trạng thái: PAID → PROCESSING', b'0', 58, 'ORDER_UPDATED', 1, 'Seller changed to PROCESSING', NULL),
+(68, '2025-10-21 18:19:56.000000', 'Đơn hàng #58 chuyển trạng thái: PROCESSING → SHIPPING', b'1', 58, 'ORDER_UPDATED', 1, 'ád', NULL),
+(69, '2025-10-21 18:30:29.000000', 'Đơn hàng #58 chuyển trạng thái: SHIPPING → REFUNDED', b'1', 58, 'ORDER_UPDATED_REFUNDED_IN_TRANSIT', 1, 'ád', NULL),
+(70, '2025-10-21 20:10:03.000000', 'Đơn hàng #59 chuyển trạng thái: PENDING → PAID', b'0', 59, 'ORDER_UPDATED_PAID', 1, 'ád', NULL),
+(71, '2025-10-21 20:10:32.000000', 'Đơn hàng #59 chuyển trạng thái: PAID → PROCESSING', b'0', 59, 'ORDER_UPDATED_PROCESSING_AFTER_PAID', 1, 'ád', NULL),
+(72, '2025-10-21 20:10:40.000000', 'Đơn hàng #59 chuyển trạng thái: PROCESSING → SHIPPING', b'1', 59, 'ORDER_UPDATED_SHIPPING', 1, 'ád', NULL),
+(73, '2025-10-21 20:10:58.000000', 'Đơn hàng #59 chuyển trạng thái: SHIPPING → DELIVERED', b'1', 59, 'ORDER_UPDATED_DELIVERED', 1, 'ád', NULL),
+(74, '2025-10-21 20:47:48.000000', 'thong bao test3333', b'0', NULL, 'SYSTEM', 1, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -277,7 +333,13 @@ INSERT INTO `orders` (`id`, `created_at`, `status`, `user_id`) VALUES
 (48, '2025-09-16 19:51:45.000000', 'COMPLETED', 1),
 (49, '2025-10-08 07:10:51.000000', 'CANCELLED', 1),
 (50, '2025-10-08 07:44:39.000000', 'CANCELLED', 1),
-(51, '2025-10-08 10:02:46.000000', 'CANCELLED', 1);
+(51, '2025-10-08 10:02:46.000000', 'CANCELLED', 1),
+(52, '2025-10-09 02:08:54.000000', 'COMPLETED', 1),
+(55, '2025-10-11 18:41:39.000000', 'COMPLETED', 1),
+(56, '2025-10-18 06:25:06.000000', 'COMPLETED', 1),
+(57, '2025-10-18 09:21:23.000000', 'REFUNDED', 1),
+(58, '2025-10-21 18:16:46.000000', 'REFUNDED', 1),
+(59, '2025-10-21 20:09:57.000000', 'DELIVERED', 1);
 
 -- --------------------------------------------------------
 
@@ -344,11 +406,12 @@ INSERT INTO `order_items` (`id`, `price`, `quantity`, `order_id`, `product_id`, 
 (44, 0.2, 1, 47, 3, NULL),
 (45, 22, 1, 48, 5, NULL),
 (46, 0.2, 1, 49, 3, NULL),
-(47, 15, 1, 49, 10, NULL),
-(48, 15, 1, 49, 10, NULL),
-(49, 15, 1, 50, 10, 9),
-(50, 15, 1, 51, 10, 10),
-(51, 15, 1, 51, 10, 11);
+(52, 15, 1, 52, 17, 40),
+(53, 22, 1, 55, 27, 43),
+(54, 0.2, 1, 56, 3, 47),
+(55, 0.2, 1, 57, 3, 47),
+(56, 0.2, 1, 58, 3, 47),
+(57, 0.2, 1, 59, 3, 47);
 
 -- --------------------------------------------------------
 
@@ -435,23 +498,26 @@ CREATE TABLE `products` (
   `rating_count` int(11) DEFAULT NULL,
   `sales_count` int(11) DEFAULT NULL,
   `sku` varchar(255) DEFAULT NULL,
-  `status` enum('ACTIVE','DELETED','INACTIVE') DEFAULT NULL,
+  `status` enum('ACTIVE','INACTIVE','DELETED','PROCESSING','REJECTED','FAILED') DEFAULT NULL,
   `type` enum('DIGITAL','PHYSICAL','SERVICE') DEFAULT NULL,
   `updated_at` datetime(6) DEFAULT NULL,
   `view_count` int(11) DEFAULT NULL,
   `weight` double DEFAULT NULL,
-  `seller_id` bigint(20) NOT NULL
+  `seller_id` bigint(20) NOT NULL,
+  `validation_result` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `products`
 --
 
-INSERT INTO `products` (`id`, `brand`, `created_at`, `description`, `dimensions`, `discount_price`, `image_url`, `is_featured`, `name`, `price`, `quantity`, `rating_avg`, `rating_count`, `sales_count`, `sku`, `status`, `type`, `updated_at`, `view_count`, `weight`, `seller_id`) VALUES
-(3, 'no', '2025-08-08 01:10:56.000000', 'Men\'s 2-button Vest with Shiny Lapels', '12x12x22', 0.05, '04d18808-37d4-403b-926d-5ad57d471bd3.png', b'1', 'Men\'s 2-button Vest with Shiny Lapels', 0.2, 993, 4, 1, NULL, 'ASBFB12BR', 'ACTIVE', NULL, '2025-08-23 20:26:46.000000', NULL, 2, 1),
-(5, NULL, '2025-08-20 20:36:55.000000', 'Korean men\'s loose-fit blazer, black and cream', NULL, 12, '7e75da39-73c2-422d-87e5-b114f27be28c.png', b'0', 'Korean men\'s loose-fit blazer, black and cream', 22, 12, NULL, NULL, NULL, NULL, 'ACTIVE', NULL, '2025-08-23 20:29:05.000000', NULL, NULL, 1),
-(7, 'sadv', '2025-08-24 01:18:20.000000', 'avsdva', '22', 2, 'a695a9cb-4a52-4b18-beea-ef140ff69f1f.png', b'0', 'yrdy', 1, 22, NULL, NULL, NULL, 'asd', 'ACTIVE', NULL, NULL, NULL, 24, 1),
-(10, 'MyBrand', '2025-09-30 20:00:22.000000', 'Áo thun nam nữ form regular, Áo blazer nam nữ kẻ sọc unisex ARMCEO mới nhất chất liệu cotton spandex đứng form', '30x20x3', 110000, NULL, b'0', 'Áo blazer nam nữ kẻ sọc unisex ARMCEO mới nhất chất liệu cotton spandex', 15, 80, NULL, NULL, NULL, 'ARK02', 'ACTIVE', 'PHYSICAL', '2025-10-08 09:43:00.000000', NULL, 0.2, 1);
+INSERT INTO `products` (`id`, `brand`, `created_at`, `description`, `dimensions`, `discount_price`, `image_url`, `is_featured`, `name`, `price`, `quantity`, `rating_avg`, `rating_count`, `sales_count`, `sku`, `status`, `type`, `updated_at`, `view_count`, `weight`, `seller_id`, `validation_result`) VALUES
+(3, 'nom', '2025-08-08 01:10:56.000000', 'Men\'s 2-button Vest with Shiny Lapels', '12x12x22', 0.05, 'd6b3d73e-ff52-431e-9876-ff8d4188885b.png', b'1', 'Men\'s 2-button Vest with Shiny Lapels', 0.2, 990, 3, 2, NULL, 'ASBFB12BR', 'ACTIVE', 'PHYSICAL', '2025-10-21 20:10:03.000000', NULL, 2, 1, NULL),
+(5, NULL, '2025-08-20 20:36:55.000000', 'Korean men\'s loose-fit blazer, black and cream', NULL, 12, '7e75da39-73c2-422d-87e5-b114f27be28c.png', b'0', 'Korean men\'s loose-fit blazer, black and cream', 22, 12, NULL, NULL, NULL, NULL, 'ACTIVE', NULL, '2025-08-23 20:29:05.000000', NULL, NULL, 1, NULL),
+(17, 'MyBrand', '2025-10-09 00:54:44.000000', 'Áo thun nam nữ form regular, Áo blazer nam nữ kẻ sọc unisex ARMCEO mới nhất chất liệu cotton spandex đứng form', '30x20x3', 3, 'a7ba0617-0a28-4746-910d-a6334c2a6495.png', b'0', 'Áo blazer nam nữ kẻ sọc unisex ARMCEO mới nhất chất liệu cotton spandex', 15, 79, NULL, NULL, NULL, 'ARK02', 'ACTIVE', 'PHYSICAL', '2025-10-09 02:13:16.000000', NULL, 0.2, 1, NULL),
+(27, 'veve', '2025-10-10 05:08:55.000000', 'zzz', '2x2x2', 1, 'e1b64bd7-5983-4ac2-907e-afa554667066.png', b'0', 'product testzvvd', 22, 1, 3, 3, NULL, 'vweeswtgbw', 'ACTIVE', 'PHYSICAL', '2025-10-12 06:17:28.000000', NULL, 2, 1, NULL),
+(36, NULL, '2025-11-04 19:37:24.000000', 'mo ta tes', NULL, NULL, '2bebd82c-571c-4aef-826d-bce602203fa1.png', b'0', 'A yellow duck', 22, 12, NULL, NULL, NULL, NULL, 'REJECTED', NULL, '2025-11-04 19:37:38.000000', NULL, NULL, 1, '{\"safety\":{\"nsfw_label\":\"safe\",\"nsfw_confidence\":0.99,\"reasons\":[]},\"consistency\":{\"is_title_image_consistent\":\"no\",\"confidence\":0.99,\"mismatch_reasons\":[\"The image displays a male model wearing a pinstripe blazer and trousers, while the product title describes \'A yellow duck\'. There is no yellow duck visible in the image.\"]},\"suggestions\":{\"suggested_title\":\"Men\'s Grey Pinstripe Double-Breasted Blazer Suit Set\",\"suggested_description\":\"Stylish men\'s grey pinstripe double-breasted blazer, made from cotton spandex, paired with matching trousers. This formal or business casual suit set is designed for a regular fit and is available in sizes M to 2XL.\",\"keywords\":[\"men\'s blazer\",\"pinstripe suit\",\"double-breasted\",\"men\'s fashion\",\"suit set\",\"formal wear\",\"business casual\",\"grey blazer\",\"cotton spandex\",\"menswear\"],\"category_guess\":\"Men\'s Suits & Blazers\"}}'),
+(37, NULL, '2025-11-04 19:59:57.000000', '', NULL, NULL, '58d230f4-cf56-4677-8d98-8be7c717178d.png', b'0', 'a yeallow duck', 0, 0, NULL, NULL, NULL, NULL, 'REJECTED', 'PHYSICAL', '2025-11-04 20:00:12.000000', NULL, NULL, 1, '{\"safety\":{\"nsfw_label\":\"safe\",\"nsfw_confidence\":1.0,\"reasons\":[]},\"consistency\":{\"is_title_image_consistent\":\"no\",\"confidence\":1.0,\"mismatch_reasons\":[\"The title \'a yeallow duck\' does not describe the content of the image, which shows a male model wearing a grey pinstriped suit and flat lay images of the same suit.\",\"The title also contains a typo (\'yeallow\' instead of \'yellow\').\"]},\"suggestions\":{\"suggested_title\":\"Men\'s Grey Pinstriped Double-Breasted Suit Set with Wide-Leg Trousers\",\"suggested_description\":\"Elevate your style with this sophisticated men\'s grey pinstriped suit, featuring a modern double-breasted blazer and stylish wide-leg trousers. Perfect for a sharp, contemporary look.\",\"keywords\":[\"men\'s suit\",\"pinstripe\",\"grey suit\",\"double-breasted blazer\",\"wide-leg trousers\",\"formal wear\",\"business casual\",\"menswear\",\"striped suit\"],\"category_guess\":\"Men\'s Suits\"}}');
 
 -- --------------------------------------------------------
 
@@ -471,8 +537,10 @@ CREATE TABLE `product_category` (
 INSERT INTO `product_category` (`product_id`, `category_id`) VALUES
 (3, 5),
 (5, 5),
-(7, 5),
-(10, 5);
+(17, 5),
+(27, 6),
+(36, 5),
+(37, 5);
 
 -- --------------------------------------------------------
 
@@ -496,10 +564,15 @@ CREATE TABLE `product_variants` (
 --
 
 INSERT INTO `product_variants` (`id`, `active`, `image_url`, `price`, `sku_code`, `stock`, `weight`, `product_id`) VALUES
-(9, b'1', '5db0b226-1af9-45bd-9731-2634bb552041.png', 130000, 'TSHIRT-RS', 10, NULL, 10),
-(10, b'1', 'be30f7de-22d8-475b-90b3-a8a554cfc750.png', 130000, 'TSHIRT-RM', 8, NULL, 10),
-(11, b'1', '4fb05b3e-0a89-46a2-b5bc-b98e0e4fb9e6.png', 125000, 'TSHIRT-BS', 12, NULL, 10),
-(12, b'1', '212d64ec-6027-45d1-9a10-d5d16db01315.png', 125000, 'TSHIRT-BM', 9, NULL, 10);
+(37, b'1', '67872633-ad94-4666-b0ad-6cca7d57e3dd.png', 130000, 'TSHIRT-RS', 10, NULL, 17),
+(38, b'1', 'a28cb003-bab4-408e-b7f1-053e693cedcc.png', 130000, 'TSHIRT-RM', 8, NULL, 17),
+(39, b'1', '56930bcd-8a57-414a-b99a-0ff4dd3dc213.png', 125000, 'TSHIRT-BS', 12, NULL, 17),
+(40, b'1', '3f4595b4-17ec-487f-a066-9abeac9f4955.png', 125000, 'TSHIRT-BM', 9, NULL, 17),
+(43, b'1', '70066e68-ca9a-4fad-aa6f-e2e870905363.png', 1, 'vwadvav', 1, NULL, 27),
+(44, b'1', 'fceed1e3-717a-4edd-9dd8-ba492ae11952.png', 1, 'vzvz', 2, NULL, 27),
+(45, b'1', '253121a7-73ed-4f94-a3e1-52abda331683.png', 1, 'vdvwv', 2, NULL, 27),
+(46, b'1', 'c4054002-0c7c-4201-ad11-16c2d44bed36.png', 2, 'wv3rb', 1, NULL, 27),
+(47, b'1', 'a0407e81-7c2c-437c-a134-6d38195dce8e.jpg', 1, 'zzzz', 2, NULL, 3);
 
 -- --------------------------------------------------------
 
@@ -517,14 +590,23 @@ CREATE TABLE `product_variant_option` (
 --
 
 INSERT INTO `product_variant_option` (`variant_id`, `option_id`) VALUES
-(9, 9),
-(9, 11),
-(10, 9),
-(10, 12),
-(11, 10),
-(11, 11),
-(12, 10),
-(12, 12);
+(37, 37),
+(37, 39),
+(38, 37),
+(38, 40),
+(39, 38),
+(39, 39),
+(40, 38),
+(40, 40),
+(43, 43),
+(43, 45),
+(44, 43),
+(44, 46),
+(45, 44),
+(45, 45),
+(46, 44),
+(46, 46),
+(47, 47);
 
 -- --------------------------------------------------------
 
@@ -539,15 +621,40 @@ CREATE TABLE `ratings` (
   `stars` int(11) NOT NULL,
   `order_item_id` bigint(20) NOT NULL,
   `product_id` bigint(20) NOT NULL,
-  `user_id` bigint(20) NOT NULL
+  `user_id` bigint(20) NOT NULL,
+  `anonymous` bit(1) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `ratings`
 --
 
-INSERT INTO `ratings` (`id`, `comment`, `created_at`, `stars`, `order_item_id`, `product_id`, `user_id`) VALUES
-(2, 'ok phet', '2025-08-08 19:21:45.000000', 4, 1, 3, 1);
+INSERT INTO `ratings` (`id`, `comment`, `created_at`, `stars`, `order_item_id`, `product_id`, `user_id`, `anonymous`) VALUES
+(23, 'ok phet', '2025-10-12 06:17:28.000000', 3, 53, 27, 1, b'0'),
+(24, 'cx tam dc .. \\n anh mang tinh chat minh hoa', '2025-10-18 06:59:07.000000', 2, 54, 3, 1, b'0');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `rating_images`
+--
+
+CREATE TABLE `rating_images` (
+  `id` bigint(20) NOT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `url` varchar(512) NOT NULL,
+  `rating_id` bigint(20) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `rating_images`
+--
+
+INSERT INTO `rating_images` (`id`, `created_at`, `url`, `rating_id`) VALUES
+(1, '2025-10-12 06:17:28.000000', '2f67b445-b4f8-4848-8473-c0c0b8fbfe1b.png', 23),
+(2, '2025-10-12 06:17:28.000000', 'c26cbc42-27a8-4c98-8d53-039185c4d2ec.png', 23),
+(3, '2025-10-18 06:59:07.000000', 'f615216f-c193-447b-a3ca-1bc0fcc73d7d.jpg', 24),
+(4, '2025-10-18 06:59:07.000000', '8e874593-888c-4be3-8734-82551b4196b0.jpg', 24);
 
 -- --------------------------------------------------------
 
@@ -577,8 +684,9 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `email`, `password`, `role`, `username`, `avatar_url`, `created_at`, `date_of_birth`, `full_name`, `gender`, `last_login_at`, `phone`, `status`, `updated_at`) VALUES
-(1, 'tuan122@gmail.com', '$2a$10$HcJEQYuntmu6dNi/d.z7iuJmCyqyS.13W9xOpyj.E/6CP1cir5AJO', 'ADMIN', 'admin', '0ec38bbe-c745-4005-97d6-086ae91e4571.jpg', NULL, '2001-06-12', 'Bui Quang Khai', 'MALE', NULL, '0123455111', 'ACTIVE', NULL),
-(2, 'tuan12222@gmail.com', '$2a$10$9UTRKnDDuFAq7jnc/i2vCeKhAsN051l/qzOG4jeWIFL2mgICF86x.', 'CUSTOMER', 'tuan12', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ACTIVE', NULL);
+(1, 'tuan122@gmail.com', '$2a$10$HcJEQYuntmu6dNi/d.z7iuJmCyqyS.13W9xOpyj.E/6CP1cir5AJO', 'ADMIN', 'admin', '0ec38bbe-c745-4005-97d6-086ae91e4571.jpg', NULL, '2001-06-12', 'Nguyễn Tiến Chínhzf', 'MALE', NULL, '0901234567', 'ACTIVE', '2025-11-11 11:46:28.000000'),
+(2, 'tuan12222@gmail.com', '$2a$10$9UTRKnDDuFAq7jnc/i2vCeKhAsN051l/qzOG4jeWIFL2mgICF86x.', 'CUSTOMER', 'tuan12', 'cc958a8c-6aaf-4ad0-ab45-3ea036373e88.png', NULL, NULL, 'Alex Hira', NULL, NULL, NULL, 'ACTIVE', NULL),
+(3, 'kawdwm@gmail.com', '$2a$10$n.NG7K7T.qv0LBEGhYOBlevmZ08KnSPnF0AcLpKf62W5xCKq/mpFu', 'CUSTOMER', 'user', '253121a7-73ed-4f94-a3e1-52abda331683.png', '2025-11-11 11:54:17.000000', NULL, 'Cuszza Zck', NULL, NULL, NULL, 'INACTIVE', '2025-11-11 11:54:17.000000');
 
 -- --------------------------------------------------------
 
@@ -598,8 +706,11 @@ CREATE TABLE `variant_groups` (
 --
 
 INSERT INTO `variant_groups` (`id`, `name`, `sort_order`, `product_id`) VALUES
-(5, 'Color', 1, 10),
-(6, 'Size', 2, 10);
+(19, 'Color', 1, 17),
+(20, 'Size', 2, 17),
+(22, 'Color', 1, 27),
+(23, 'Size', 2, 27),
+(24, 'Color', 1, 3);
 
 -- --------------------------------------------------------
 
@@ -618,10 +729,15 @@ CREATE TABLE `variant_options` (
 --
 
 INSERT INTO `variant_options` (`id`, `value`, `group_id`) VALUES
-(9, 'Black', 5),
-(10, 'Gray', 5),
-(12, 'M', 6),
-(11, 'S', 6);
+(37, 'Black', 19),
+(38, 'Gray', 19),
+(40, 'M', 20),
+(39, 'S', 20),
+(43, 'Black', 22),
+(44, 'Gray', 22),
+(46, 'M', 23),
+(45, 'S', 23),
+(47, 'Red', 24);
 
 --
 -- Chỉ mục cho các bảng đã đổ
@@ -695,7 +811,7 @@ ALTER TABLE `order_items`
   ADD PRIMARY KEY (`id`),
   ADD KEY `FKbioxgbv59vetrxe0ejfubep1w` (`order_id`),
   ADD KEY `FKocimc7dtr037rh4ls4l95nlfi` (`product_id`),
-  ADD KEY `FKemq71edpbn9wsxnxncfn1algp` (`variant_id`);
+  ADD KEY `idx_order_items_variant_id` (`variant_id`);
 
 --
 -- Chỉ mục cho bảng `payments`
@@ -742,6 +858,13 @@ ALTER TABLE `ratings`
   ADD KEY `FKb3354ee2xxvdrbyq9f42jdayd` (`user_id`);
 
 --
+-- Chỉ mục cho bảng `rating_images`
+--
+ALTER TABLE `rating_images`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `ix_rating_images_rating` (`rating_id`);
+
+--
 -- Chỉ mục cho bảng `users`
 --
 ALTER TABLE `users`
@@ -771,19 +894,19 @@ ALTER TABLE `variant_options`
 -- AUTO_INCREMENT cho bảng `addresses`
 --
 ALTER TABLE `addresses`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT cho bảng `carts`
 --
 ALTER TABLE `carts`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT cho bảng `cart_items`
 --
 ALTER TABLE `cart_items`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=96;
 
 --
 -- AUTO_INCREMENT cho bảng `categories`
@@ -795,31 +918,31 @@ ALTER TABLE `categories`
 -- AUTO_INCREMENT cho bảng `chat_messages`
 --
 ALTER TABLE `chat_messages`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT cho bảng `chat_rooms`
 --
 ALTER TABLE `chat_rooms`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT cho bảng `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
 
 --
 -- AUTO_INCREMENT cho bảng `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
 
 --
 -- AUTO_INCREMENT cho bảng `order_items`
 --
 ALTER TABLE `order_items`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
 
 --
 -- AUTO_INCREMENT cho bảng `payments`
@@ -831,37 +954,43 @@ ALTER TABLE `payments`
 -- AUTO_INCREMENT cho bảng `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT cho bảng `product_variants`
 --
 ALTER TABLE `product_variants`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
 
 --
 -- AUTO_INCREMENT cho bảng `ratings`
 --
 ALTER TABLE `ratings`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+
+--
+-- AUTO_INCREMENT cho bảng `rating_images`
+--
+ALTER TABLE `rating_images`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT cho bảng `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT cho bảng `variant_groups`
 --
 ALTER TABLE `variant_groups`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT cho bảng `variant_options`
 --
 ALTER TABLE `variant_options`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
 
 --
 -- Các ràng buộc cho các bảng đã đổ
@@ -924,8 +1053,8 @@ ALTER TABLE `orders`
 --
 ALTER TABLE `order_items`
   ADD CONSTRAINT `FKbioxgbv59vetrxe0ejfubep1w` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`),
-  ADD CONSTRAINT `FKemq71edpbn9wsxnxncfn1algp` FOREIGN KEY (`variant_id`) REFERENCES `product_variants` (`id`),
-  ADD CONSTRAINT `FKocimc7dtr037rh4ls4l95nlfi` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+  ADD CONSTRAINT `FKocimc7dtr037rh4ls4l95nlfi` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`),
+  ADD CONSTRAINT `fk_order_items_variant` FOREIGN KEY (`variant_id`) REFERENCES `product_variants` (`id`) ON DELETE SET NULL;
 
 --
 -- Các ràng buộc cho bảng `payments`
@@ -966,6 +1095,12 @@ ALTER TABLE `ratings`
   ADD CONSTRAINT `FK228us4dg38ewge41gos8y761r` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`),
   ADD CONSTRAINT `FKb3354ee2xxvdrbyq9f42jdayd` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `FKbkoqjbfsgob50aqsir6tvhevv` FOREIGN KEY (`order_item_id`) REFERENCES `order_items` (`id`);
+
+--
+-- Các ràng buộc cho bảng `rating_images`
+--
+ALTER TABLE `rating_images`
+  ADD CONSTRAINT `FK30swsrntej4tj641cf97tmyvm` FOREIGN KEY (`rating_id`) REFERENCES `ratings` (`id`);
 
 --
 -- Các ràng buộc cho bảng `variant_groups`
