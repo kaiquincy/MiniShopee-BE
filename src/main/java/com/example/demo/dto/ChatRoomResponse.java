@@ -10,6 +10,7 @@ public class ChatRoomResponse {
     private String userBId;
     private String userAFullName;
     private String userBFullName;
+    private String userBAvatarUrl;
     private ChatMessageResponse lastMsg;
 
     // Constructor
@@ -19,6 +20,7 @@ public class ChatRoomResponse {
         this.userBId = cr.getUserB().getUsername();
         this.userAFullName = cr.getUserA().getFullName();
         this.userBFullName = cr.getUserB().getFullName();
+        this.userBAvatarUrl = cr.getUserB().getAvatarUrl();
     }
 
     // Getter and Setter for lastMsg
