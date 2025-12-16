@@ -58,7 +58,7 @@ public class ChatService {
         // ChatMessage lastMsgAlias = msgRepo.findTopByRoomIdOrderByCreatedAtDesc(room.getId())
         //                                  .orElse(null);
         return rooms.stream().map(room -> {
-            ChatRoomResponse dto = new ChatRoomResponse(room);
+            ChatRoomResponse dto = new ChatRoomResponse(room).normalizeFor(me, room);
 
             // Lấy tin nhắn cuối cùng của room
             ChatMessage lastMsgAlias = msgRepo.findTopByRoomIdOrderByCreatedAtDesc(room.getId())

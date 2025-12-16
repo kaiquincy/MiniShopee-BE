@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.ApiResponse;
-import com.example.demo.dto.PaymentCallbackDto;
 import com.example.demo.dto.PaymentRequest;
 import com.example.demo.dto.PaymentResponse;
 import com.example.demo.enums.OrderStatus;
@@ -24,12 +23,10 @@ import com.example.demo.repository.PaymentRepository;
 import com.example.demo.service.PaymentService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import lombok.RequiredArgsConstructor;
 import vn.payos.PayOS;
-import vn.payos.type.Webhook;
-import vn.payos.type.WebhookData;
+import vn.payos.model.webhooks.*;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -45,29 +42,76 @@ public class PaymentController {
     @PostMapping("/initiate")
     public ResponseEntity<ApiResponse<PaymentResponse>> initiate(
             @RequestBody PaymentRequest req) {
-        PaymentResponse pr = paymentService.initiate(PaymentMethod.PAYOS, 11L);
+        PaymentResponse pr = paymentService.initiate(PaymentMethod.PAYOS, req.getOrderId());
         ApiResponse<PaymentResponse> resp = new ApiResponse<>();
         resp.setResult(pr);
         return ResponseEntity.ok(resp);
     }
 
-    //When user paid the money
-    @PostMapping(path = "/confirm-webhook")
-    public ObjectNode payosTransferHandler(@RequestBody ObjectNode body)
-        throws JsonProcessingException, IllegalArgumentException {
+    // //When user paid the money
+    // @PostMapping(path = "/confirm-webhook")
+    // public ObjectNode payosTransferHandler(@RequestBody ObjectNode body)
+    //     throws JsonProcessingException, IllegalArgumentException {
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        ObjectNode response = objectMapper.createObjectNode();
-        Webhook webhookBody = objectMapper.treeToValue(body, Webhook.class);
+    //     ObjectMapper objectMapper = new ObjectMapper();
+    //     ObjectNode response = objectMapper.createObjectNode();
+    //     Webhook webhookBody = objectMapper.treeToValue(body, Webhook.class);
 
-        try {
-            // Init Response
-            response.put("error", 0);
-            response.put("message", "Webhook delivered");
-            response.set("data", null);
+    //     try {
+    //         // Init Response
+    //         response.put("error", 0);
+    //         response.put("message", "Webhook delivered");
+    //         response.set("data", null);
 
-            WebhookData data = payOS.verifyPaymentWebhookData(webhookBody);
+    //         WebhookData data = payOS.verifyPaymentWebhookData(webhookBody);
             
+    //         //set  transaction's status to "PURCHASE"
+    //         Payment currentTransaction = paymentRe.getPaymentByTransactionId(data.getPaymentLinkId()).get();
+            
+    //         paymentService.changeStatus(currentTransaction, "SUCCESS");
+
+    //         logger.info("Payment verified (WebhookData) = \n{}",
+    //                 objectMapper.writerWithDefaultPrettyPrinter()
+    //                             .writeValueAsString(data));
+
+    //         Long orderId = currentTransaction.getOrder().getId();
+
+    //         Order order = orderRepo.findById(orderId)
+    //             .orElseThrow(() -> new AppException(
+    //                 ErrorCode.ORDER_NOT_EXISTED));
+    //         order.setStatus(OrderStatus.PAID.toString());
+    //         orderRepo.save(order);
+
+
+    //         //add enrollment
+    //         // System.out.println(currentTransaction.getProductId());
+    //         // enrollmentService.addEnrollment(currentTransaction.getProductId(), currentTransaction.getUserId());
+
+    //         //mail
+    //         // String msg = "You have successfully registered for the course! Click this link to navigate to your course : " ;
+    //         // String email = "kawdwk@gmail.com"; 
+    
+    //         // emailService.confirmRegisterCourse(msg, email);
+
+    //         return response;
+    //     } catch (Exception e) {
+    //         e.printStackTrace();
+    //         response.put("error", -1);
+    //         response.put("message", e.getMessage());
+    //         response.set("data", null);
+    //         return response;
+    //     }
+    // }
+
+
+    @PostMapping(path = "/confirm-webhook")
+    public ApiResponse<WebhookData> payosTransferHandler(@RequestBody Object body)
+        throws JsonProcessingException, IllegalArgumentException {
+        ApiResponse<WebhookData> resp = new ApiResponse<>();
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            WebhookData data = payOS.webhooks().verify(body);
+
             //set  transaction's status to "PURCHASE"
             Payment currentTransaction = paymentRe.getPaymentByTransactionId(data.getPaymentLinkId()).get();
             
@@ -85,25 +129,12 @@ public class PaymentController {
             order.setStatus(OrderStatus.PAID.toString());
             orderRepo.save(order);
 
-
-            //add enrollment
-            // System.out.println(currentTransaction.getProductId());
-            // enrollmentService.addEnrollment(currentTransaction.getProductId(), currentTransaction.getUserId());
-
-            //mail
-            // String msg = "You have successfully registered for the course! Click this link to navigate to your course : " ;
-            // String email = "kawdwk@gmail.com"; 
-    
-            // emailService.confirmRegisterCourse(msg, email);
-
-            return response;
+            resp.setResult(data);
+            return resp;
         } catch (Exception e) {
             e.printStackTrace();
-            response.put("error", -1);
-            response.put("message", e.getMessage());
-            response.set("data", null);
-            return response;
-        }
+            return resp; 
+            }
     }
 
 

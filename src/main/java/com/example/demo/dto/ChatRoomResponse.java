@@ -13,7 +13,7 @@ public class ChatRoomResponse {
     private String userBAvatarUrl;
     private ChatMessageResponse lastMsg;
 
-    // Constructor
+    // GIỮ NGUYÊN constructor cũ
     public ChatRoomResponse(ChatRoom cr) {
         this.roomId = cr.getId();
         this.userAId = cr.getUserA().getUsername();
@@ -23,9 +23,23 @@ public class ChatRoomResponse {
         this.userBAvatarUrl = cr.getUserB().getAvatarUrl();
     }
 
-    // Getter and Setter for lastMsg
-    public void setLastMsg(ChatMessageResponse lastMsg) {
-        this.lastMsg = lastMsg;
+    // ✅ factory mới: đảm bảo userB luôn là peer
+    public ChatRoomResponse normalizeFor(Long currentUserId, ChatRoom cr) {
+        var a = cr.getUserA();
+        var b = cr.getUserB();
+
+        boolean currentIsA = a.getId().equals(currentUserId);
+        var current = currentIsA ? a : b;
+        var peer = currentIsA ? b : a;
+
+        this.userAId = current.getUsername();
+        this.userAFullName = current.getFullName();
+
+        this.userBId = peer.getUsername();
+        this.userBFullName = peer.getFullName();
+        this.userBAvatarUrl = peer.getAvatarUrl();
+
+        return this;
     }
 
 }

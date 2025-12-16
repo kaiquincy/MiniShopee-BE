@@ -18,7 +18,7 @@ public class OrderScheduler {
     private final OrderStatusService orderStatusService;
 
     /** Mỗi 5 phút: auto-cancel các đơn PENDING quá 30 phút */
-    @Scheduled(fixedRate = 5 * 60 * 1000)
+    @Scheduled(fixedRate = 5 * 120 * 1000)
     public void cancelExpiredPending() {
         LocalDateTime threshold = LocalDateTime.now().minusMinutes(30); // 30 phút trước
         List<Order> list = orderRepo.findByStatusAndCreatedAtBefore(OrderStatus.PENDING.name(), threshold);

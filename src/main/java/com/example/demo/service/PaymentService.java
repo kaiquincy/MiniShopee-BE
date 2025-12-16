@@ -30,9 +30,10 @@ import com.example.demo.repository.PaymentRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import vn.payos.PayOS;
-import vn.payos.type.CheckoutResponseData;
-import vn.payos.type.ItemData;
-import vn.payos.type.PaymentData;
+import vn.payos.model.v2.paymentRequests.CreatePaymentLinkRequest;
+import vn.payos.model.v2.paymentRequests.CreatePaymentLinkResponse;
+import vn.payos.model.v2.paymentRequests.PaymentLinkItem;
+
 
 @Service
 @RequiredArgsConstructor
@@ -75,7 +76,7 @@ public class PaymentService {
             final String productName = "Payment for order " + orderId;
             final String description = orderId.toString();
             final String returnUrl = "http://localhost:5173/payment/return"; // replace with actual return UR
-            final String cancelUrl = "Http://localhost:5173/payment/cancel"; // replace with actual cancel UR
+            final String cancelUrl = "Http://localhost:5173/payment/cancel"; // replace with actual cancel URl
             double total = orderItems.stream()
                     .mapToDouble(oi -> oi.getPrice() * oi.getQuantity())
                     .sum()*25000; // Assuming price is in USD, convert to VND
@@ -84,15 +85,18 @@ public class PaymentService {
             // Gen order code
             String currentTimeString = String.valueOf(String.valueOf(new Date().getTime()));
             long orderCode = Long.parseLong(currentTimeString.substring(currentTimeString.length() - 6));
-    
-            ItemData item = ItemData.builder().name(productName).price(price).quantity(1).build();
-    
-            PaymentData paymentData = PaymentData.builder().orderCode(orderCode).description(description).amount(price)
-                    .item(item).returnUrl(returnUrl).cancelUrl(cancelUrl).build();
-    
-            CheckoutResponseData data = payOS.createPaymentLink(paymentData);
 
 
+            CreatePaymentLinkRequest paymentData =
+                CreatePaymentLinkRequest.builder()
+                    .orderCode(orderCode)
+                    .amount((long) price)
+                    .description(description)
+                    .returnUrl(returnUrl)
+                    .cancelUrl(cancelUrl)
+                    .item(PaymentLinkItem.builder().name(productName).price((long) price).quantity(1).build())
+                    .build();
+            CreatePaymentLinkResponse data = payOS.paymentRequests().create(paymentData);
 
 
             // 3) cập nhật transactionId, callbackData, trả về URL

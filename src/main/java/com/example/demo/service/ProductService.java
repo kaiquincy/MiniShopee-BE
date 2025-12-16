@@ -16,7 +16,8 @@ import com.example.demo.repository.ProductRepository;
 import com.example.demo.repository.ProductVariantRepository;
 import com.example.demo.repository.VariantGroupRepository;
 import com.example.demo.repository.VariantOptionRepository;
-
+import org.springframework.util.StringUtils;
+import java.util.concurrent.atomic.AtomicInteger;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -375,6 +376,13 @@ public class ProductService {
         }
 
         // 6) Tạo ProductVariant theo payload.variants
+        Set<String> usedSku = new HashSet<>();
+        AtomicInteger counter = new AtomicInteger(1);
+
+        // base sku cho product (ưu tiên product.sku)
+        String baseSku = StringUtils.hasText(saved.getSku())
+        ? saved.getSku().trim()
+        : ("P" + saved.getId());
         List<VariantRowRequest> rows = Optional.ofNullable(payload.getVariants()).orElseGet(List::of);
         for (VariantRowRequest row : rows) {
             // build set option
@@ -392,11 +400,39 @@ public class ProductService {
                 selected.add(opt);
             }
 
+            String sku = row.getSkuCode();
+            sku = (sku != null) ? sku.trim() : null;
+
+            // tạo sku ổn định theo options (đẹp + ít trùng)
+            String optionPart = groupByName.keySet().stream()
+                    .map(gName -> {
+                        String val = ov.get(gName);
+                        return (val == null) ? "" : val.trim();
+                    })
+                    .filter(StringUtils::hasText)
+                    .reduce((a, b) -> a + "-" + b)
+                    .orElse("");
+
+            if (!StringUtils.hasText(sku)) {
+                // ví dụ: P11-Red-S / hoặc P11-1 nếu không có optionPart
+                sku = StringUtils.hasText(optionPart)
+                        ? (baseSku + "-" + optionPart)
+                        : (baseSku + "-" + counter.getAndIncrement());
+            }
+
+            // đảm bảo unique trong 1 request (phòng trường hợp option trùng)
+            String original = sku;
+            int bump = 1;
+            while (usedSku.contains(sku)) {
+                sku = original + "-" + (bump++);
+            }
+            usedSku.add(sku);
+
             ProductVariant pv = ProductVariant.builder()
                     .product(saved)
                     .price(row.getPrice() != null ? row.getPrice() : saved.getPrice())
                     .stock(row.getStock() != null ? row.getStock() : 0)
-                    .skuCode(row.getSkuCode())
+                    .skuCode(sku)
                     .active(true)
                     .build();
 
@@ -426,6 +462,15 @@ public class ProductService {
         }
         return productRepository.findAll(pageable);
     }
+
+    
+    public Page<Product> findAllAdmin(String status, Pageable pageable) {
+        if (status != null && !status.isEmpty()) {
+            return productRepository.findByStatus(status, pageable);
+        }
+        return productRepository.findAll(pageable);
+    }
+
 
     public List<Product> findSimilarByCategory(Long productId, int limit, Double priceBand) {
         Product base = productRepository.findById(productId)

@@ -4,11 +4,15 @@ package com.example.demo.service;
 import com.example.demo.dto.ProductGuardrailResult;
 import com.example.demo.enums.ProductStatus;
 import com.example.demo.model.Product;
+import com.example.demo.repository.OptionsRepository;
 import com.example.demo.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import com.example.demo.model.Options;
+import java.util.Optional;
 
+import java.lang.StackWalker.Option;
 import java.util.List;
 
 @Service
@@ -16,10 +20,17 @@ import java.util.List;
 public class ProductValidationJob {
   private final ProductRepository productRepository;
   private final ProductValidationService validationService;
+  private final OptionsRepository optionsRepository;
 
   // Chạy mỗi 5 phút (có thể đổi tuỳ nhu cầu)
   @Scheduled(fixedDelay = 5000)
   public void runValidationLoop() {
+    if (optionsRepository.findByOptionName("AI_review_product").isPresent()) {
+      Optional<Options> opt = optionsRepository.findByOptionName("AI_review_product");
+      if (opt.get().getIsActive() == false) {
+        return;
+      }
+    }
     System.out.println("🔍 [ProductValidationJob] Checking pending products...");
     List<Product> pending = productRepository.findTop10ByStatus(ProductStatus.PROCESSING);
     if (pending.isEmpty()) {

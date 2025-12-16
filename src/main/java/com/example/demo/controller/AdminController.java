@@ -4,9 +4,13 @@ import com.example.demo.dto.*;
 import com.example.demo.enums.OrderStatus;
 import com.example.demo.exception.AppException;
 import com.example.demo.exception.ErrorCode;
+import com.example.demo.model.Options;
 import com.example.demo.model.Order;
+import com.example.demo.model.Product;
 import com.example.demo.model.User;
+import com.example.demo.service.OptionsService;
 import com.example.demo.service.OrderService;
+import com.example.demo.service.ProductService;
 // import com.example.demo.service.AdminOrderService;
 // import com.example.demo.service.AdminProductService;
 import com.example.demo.service.UserService;
@@ -15,6 +19,8 @@ import com.example.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
@@ -26,9 +32,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AdminController {
 
+
     // private final AdminOrderService orderService;
     private final UserService userService;
     private final OrderService orderService;
+    private final OptionsService optionsService;
+    private final ProductService productService;
+
     // private final AdminProductService productService;
     // private final AuditService auditService;
 
@@ -118,18 +128,40 @@ public class AdminController {
     //     return rsp;
     // }
 
+    // GET /api/admin/options
+    @GetMapping("/options")
+    public ApiResponse<List<Options>> listOptions() {
+        List<Options> result = optionsService.getAllOptions();
+        ApiResponse<List<Options>> rsp = new ApiResponse<>();
+        rsp.setResult(result);
+        return rsp;
+    }
+
+    // POST /api/admin/options
+    @PostMapping("/options")
+    public ApiResponse<String> setOption(@RequestBody OptionsRequest req) {
+        optionsService.setOption(req.getOptionName(), req.getIsActive());
+        ApiResponse<String> rsp = new ApiResponse<>();
+        rsp.setResult("Setting updated successfully");
+        return rsp;
+    }
+
     // -------- Products --------
 
     // GET /api/admin/products
-    // @GetMapping("/products")
-    // public ApiResponse<List<ProductAdminResponse>> listProducts(
-    //         @RequestParam(required = false) String q
-    // ) {
-    //     List<ProductAdminResponse> result = productService.listProducts(q);
-    //     ApiResponse<List<ProductAdminResponse>> rsp = new ApiResponse<>();
-    //     rsp.setResult(result);
-    //     return rsp;
-    // }
+    @GetMapping("/products")
+    public ApiResponse<Page<ProductResponse>> listProducts(
+            @RequestParam(required = false) String status,
+            Pageable pageable
+    ) {
+        Page<Product> page = productService.findAllAdmin(status, pageable);
+
+        Page<ProductResponse> result = page.map(ProductResponse::new);
+
+        ApiResponse<Page<ProductResponse>> rsp = new ApiResponse<>();
+        rsp.setResult(result);
+        return rsp;
+    }
 
     // PATCH /api/admin/products/{id}
     // @PatchMapping("/products/{productId}")
