@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 public class ChatSendMessageRequest {
     private Long roomId;
-    private MessageType type = MessageType.TEXT;
+    private MessageType type;
     private String content;
 }

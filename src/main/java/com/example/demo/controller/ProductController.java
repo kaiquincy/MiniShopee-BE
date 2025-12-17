@@ -165,6 +165,7 @@ public class ProductController {
             // Build response chi tiết
             ProductDetailResponse dto = ProductDetailResponse.builder()
                     .id(p.getId())
+                    .sellerId(p.getSeller().getId())
                     .name(p.getName())
                     .description(p.getDescription())
                     .imageUrl(p.getImageUrl())

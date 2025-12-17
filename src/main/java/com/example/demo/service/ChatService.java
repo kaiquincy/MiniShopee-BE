@@ -13,6 +13,9 @@ import com.example.demo.repository.ChatMessageRepository;
 import com.example.demo.repository.ChatRoomRepository;
 import com.example.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.java.Log;
+
+import org.slf4j.Logger;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -32,12 +35,14 @@ public class ChatService {
     private final UserService userService;
     private final SimpMessagingTemplate messaging;
 
+    Logger logger = org.slf4j.LoggerFactory.getLogger(ChatService.class);
+
     /** Tạo/lấy phòng 2 người (userA.id < userB.id) — REST, dùng SecurityContext */
     @Transactional
     public ChatRoomResponse getOrCreateDirectRoom(Long peerUserId) {
         Long me = userService.getCurrentUserId();
         if (me.equals(peerUserId)) {
-            throw new AppException(ErrorCode.PASSWORD_INVALID, "Không thể chat với chính mình");
+            throw new AppException(ErrorCode.SELF_CHAT_DENIED);
         }
 
         Long a = Math.min(me, peerUserId);
@@ -86,6 +91,8 @@ public class ChatService {
      */
     @Transactional
     public ChatMessageResponse send(ChatSendMessageRequest req, Principal principal) {
+        logger.info("ChatService.send called");
+
         if (principal == null || principal.getName() == null) {
             throw new AppException(ErrorCode.UNAUTHENTICATED, "Không xác định được người dùng (WS Principal null)");
         }
@@ -101,6 +108,8 @@ public class ChatService {
 
         // Kiểm tra thành viên phòng theo userId của sender
         assertMember(room.getId(), me);
+
+        logger.info("User {} gửi tin nhắn {} tới room {}", username, req.getType() ,room.getId());
 
         ChatMessage m = ChatMessage.builder()
                 .room(room)

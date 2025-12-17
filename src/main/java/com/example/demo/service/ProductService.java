@@ -61,11 +61,12 @@ public class ProductService {
     private String uploadPath;
 
 
+
     public Product save(Product product, Set<Long> categoryIds, MultipartFile image) {
         
         // Update Ảnh (nếu có)
         if (image != null && !image.isEmpty()) {
-            String imageName = saveImage(image);
+            String imageName = saveImage(image, uploadPath);
             product.setImageUrl(imageName);
         };
 
@@ -93,7 +94,7 @@ public class ProductService {
         // --- 1) ẢNH CHÍNH ---
         if (mainImage != null && !mainImage.isEmpty()) {
             String old = existing.getImageUrl();
-            String imageName = saveImage(mainImage);
+            String imageName = saveImage(mainImage, uploadPath);
             existing.setImageUrl(imageName);
             if (old != null && !old.isBlank()) deleteImageQuietly(old);
         }
@@ -272,7 +273,7 @@ public class ProductService {
                 MultipartFile f = variantImageMap.get(row.getImageKey());
                 if (f != null && !f.isEmpty()) {
                     String oldV = pv.getImageUrl();
-                    String fn = saveImage(f);
+                    String fn = saveImage(f, uploadPath);
                     pv.setImageUrl(fn);
                     if (oldV != null && !oldV.isBlank()) deleteImageQuietly(oldV);
                 }
@@ -312,7 +313,7 @@ public class ProductService {
             Map<String, MultipartFile> variantImageMap // key -> file (match payload.imageKey)
     ) {
         // 1) Ảnh chính
-        String imageName = saveImage(mainImage);
+        String imageName = saveImage(mainImage, uploadPath);
         product.setImageUrl(imageName);
 
         logger.info("Image saved: " + mainImage.getOriginalFilename() + " -> " + imageName);
@@ -440,7 +441,7 @@ public class ProductService {
             if (row.getImageKey() != null && variantImageMap != null) {
                 MultipartFile f = variantImageMap.get(row.getImageKey());
                 if (f != null && !f.isEmpty()) {
-                    String fn = saveImage(f);
+                    String fn = saveImage(f, uploadPath);
                     pv.setImageUrl(fn);
                 }
             }
@@ -519,19 +520,19 @@ public class ProductService {
     }
 
     // Hàm lưu file ảnh và trả về tên file
-    private String saveImage(MultipartFile image) {
+    public String saveImage(MultipartFile image, String path) {
         if (image != null && !image.isEmpty()) {
             String originalFilename = StringUtils.cleanPath(image.getOriginalFilename());
             String extension = StringUtils.getFilenameExtension(originalFilename);
             String newFilename = UUID.randomUUID().toString() + "." + extension; // Đặt tên file ngẫu nhiên
 
-            File uploadDir = new File(uploadPath);
+            File uploadDir = new File(path);
             if (!uploadDir.exists()) {
                 uploadDir.mkdirs();
             }
 
             try {
-                Files.copy(image.getInputStream(), Paths.get(uploadPath + newFilename));
+                Files.copy(image.getInputStream(), Paths.get(path + newFilename));
             } catch (IOException e) {
                 e.printStackTrace();
             }

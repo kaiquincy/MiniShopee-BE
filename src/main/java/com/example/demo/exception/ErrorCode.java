@@ -53,6 +53,8 @@ public enum ErrorCode {
 
     RATE_OF_COMMENT(2100, "Rating must be between 1 and 5.", HttpStatus.BAD_REQUEST),
 
+    SELF_CHAT_DENIED(2200, "Cannot chat with yourself", HttpStatus.BAD_REQUEST),
+
     NOTIFICATION_NOT_FOUND(2200, "Notification not found", HttpStatus.BAD_REQUEST),
     MARK_AS_READ_FAIL(2201, "mark as read fail", HttpStatus.BAD_REQUEST),
     CATEGORY_NOT_FOUND(2202, "Category not found", HttpStatus.NOT_FOUND),
