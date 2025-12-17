@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.dto.ApiResponse;
 import com.example.demo.dto.JwtResponse;
 import com.example.demo.dto.LoginRequest;
+import com.example.demo.enums.Gender;
 import com.example.demo.exception.ErrorCode;
 import com.example.demo.model.Role;
 import com.example.demo.model.User;
@@ -46,6 +47,7 @@ public class AuthController {
 
         // 2. Gán role mặc định và tạo user
         user.setRole(Role.CUSTOMER);
+        user.setGender(Gender.OTHER);
         User created = userService.register(user);
 
         // 3. Trả về thành công
