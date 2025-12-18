@@ -4,6 +4,7 @@ import com.example.demo.controller.OrderController;
 import com.example.demo.dto.ProductCreateRequest;
 import com.example.demo.dto.VariantGroupRequest;
 import com.example.demo.dto.VariantRowRequest;
+import com.example.demo.enums.ProductStatus;
 import com.example.demo.exception.AppException;
 import com.example.demo.exception.ErrorCode;
 import com.example.demo.model.Category;
@@ -464,7 +465,7 @@ public class ProductService {
         return productRepository.findAll(pageable);
     }
 
-    
+
     public Page<Product> findAllAdmin(String status, Pageable pageable) {
         if (status != null && !status.isEmpty()) {
             return productRepository.findByStatus(status, pageable);
@@ -550,5 +551,24 @@ public class ProductService {
             // nuốt lỗi
         }
     }
+
+    @Transactional
+    public Product updateStatus(Long productId, ProductStatus next) {
+        if (next == null) {
+            throw new AppException(ErrorCode.INVALID_REQUEST); // or whichever you use for validation
+        }
+
+        Product p = productRepository.findById(productId)
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_EXISTED)); // you already have this one
+
+        // Optional: prevent changing DELETED (policy choice)
+        // if (p.getStatus() == ProductStatus.DELETED) {
+        //     throw new AppException(ErrorCode.INVALID_REQUEST);
+        // }
+
+        p.setStatus(next);
+        return productRepository.save(p);
+    }
+
 
 }

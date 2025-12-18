@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.*;
 import com.example.demo.enums.OrderStatus;
+import com.example.demo.enums.ProductStatus;
 import com.example.demo.exception.AppException;
 import com.example.demo.exception.ErrorCode;
 import com.example.demo.model.Options;
@@ -160,6 +161,22 @@ public class AdminController {
 
         ApiResponse<Page<ProductResponse>> rsp = new ApiResponse<>();
         rsp.setResult(result);
+        return rsp;
+    }
+
+    @PatchMapping("/products/{productId}/status")
+    public ApiResponse<SimpleOkResponse> updateProductStatus(
+            @PathVariable Long productId,
+            @RequestBody UpdateProductStatusRequest req
+    ) {
+        if (req == null || req.getStatus() == null) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "status is required");
+        }
+
+        productService.updateStatus(productId, req.getStatus());
+
+        ApiResponse<SimpleOkResponse> rsp = new ApiResponse<>();
+        rsp.setResult(SimpleOkResponse.ok());
         return rsp;
     }
 
