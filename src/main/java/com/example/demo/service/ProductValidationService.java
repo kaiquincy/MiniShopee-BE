@@ -59,7 +59,7 @@ public class ProductValidationService {
 
     String imageB64 = Base64.getEncoder().encodeToString(imageBytes);
 
-    // prompt y hệt quy định
+
     String prompt = """
         You are an e-commerce content and safety validator. Analyze the given product image and title.
 

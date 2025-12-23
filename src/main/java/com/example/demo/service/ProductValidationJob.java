@@ -42,14 +42,14 @@ public class ProductValidationJob {
       try {
         System.out.println("➡️ Checking product #" + product.getId() + " - " + product.getName());
 
-        // 1️⃣ Tải ảnh từ imageUrl (nếu bạn lưu path cục bộ hoặc CDN)
+        // 1 Tải ảnh từ imageUrl (nếu bạn lưu path cục bộ hoặc CDN)
         byte[] imageBytes = validationService.fetchImageBytes(product.getImageUrl());
 
-        // 2️⃣ Gọi Gemini
+        // 2 Gọi Gemini
         ProductGuardrailResult result = validationService.analyze(imageBytes, product.getName());
         validationService.enforceOrThrow(result);
 
-        // 3️⃣ Nếu không ném lỗi => OK
+        // 3 Nếu không ném lỗi => OK
         product.setStatus(ProductStatus.ACTIVE);
         product.setValidationResult(validationService.toJson(result));
         System.out.println("✅ Product " + product.getId() + " passed validation.");
