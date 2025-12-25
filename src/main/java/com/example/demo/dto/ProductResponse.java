@@ -6,6 +6,7 @@ import com.example.demo.model.Product;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,6 +38,7 @@ public class ProductResponse {
     private Boolean isFeatured;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private List<VariantGroupDto> variantGroups;
 
     // ✅ Thay vì trả về seller full object → chỉ trả về ID
     private Long sellerId;
@@ -74,5 +76,10 @@ public class ProductResponse {
         this.createdAt = product.getCreatedAt();
         this.updatedAt = product.getUpdatedAt();
         this.sellerId = product.getSeller() != null ? product.getSeller().getId() : null;
+    }
+        // ✅ Constructor MỚI – dùng cho list có variantGroups
+    public ProductResponse(Product product, List<VariantGroupDto> variantGroups) {
+        this(product);                 // gọi constructor cũ
+        this.variantGroups = variantGroups;
     }
 }

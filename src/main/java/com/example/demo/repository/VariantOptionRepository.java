@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface VariantOptionRepository extends JpaRepository<VariantOption, Long> {
     List<VariantOption> findByGroup_Id(Long groupId);
+    List<VariantOption> findByGroup_IdIn(List<Long> groupIds);
+
 }

@@ -74,8 +74,30 @@ public class ProductController {
             Page<Product> productPage = productService.findByCategoryId(categoryId, name, pageable);
 
             // ✅ Chuyển Page<Product> -> Page<ProductDTO>
-            Page<ProductResponse> dtoPage = productPage.map(ProductResponse::new);
+        Page<ProductResponse> dtoPage = productPage.map(p -> {
+            List<VariantGroup> groups = variantGroupRepository.findByProduct_IdOrderBySortOrderAsc(p.getId());
 
+            List<VariantGroupDto> groupDtos = groups.stream().map(g -> {
+                var ops = variantOptionRepository.findByGroup_Id(g.getId());
+                var opDtos = ops.stream()
+                        .map(o -> VariantOptionDto.builder()
+                                .id(o.getId())
+                                .value(o.getValue())
+                                .build())
+                        .toList();
+
+                return VariantGroupDto.builder()
+                        .id(g.getId())
+                        .name(g.getName())
+                        .sortOrder(g.getSortOrder())
+                        .options(opDtos)
+                        .build();
+            }).toList();
+
+            return new ProductResponse(p, groupDtos);
+        });
+
+            
             resp.setResult(dtoPage);
             resp.setMessage("Lấy danh sách sản phẩm thành công");
             return ResponseEntity.ok(resp);
